@@ -10,6 +10,7 @@ export async function startDevServer(options = {}) {
   const port = parseInt(options.port) || 3000;
   const root = options.root || process.cwd();
   const compiledDir = join(root, '.bertui', 'compiled');
+  const stylesDir = join(root, '.bertui', 'styles');
   
   const config = await loadConfig(root);
   
@@ -43,6 +44,21 @@ export async function startDevServer(options = {}) {
             return new Response(await file.text(), {
               headers: { 
                 'Content-Type': contentType,
+                'Cache-Control': 'no-store'
+              }
+            });
+          }
+        }
+        
+        // FIXED: Handle CSS files from .bertui/styles
+        if (path.startsWith('styles/') && path.endsWith('.css')) {
+          const cssPath = join(stylesDir, path.replace('styles/', ''));
+          const file = Bun.file(cssPath);
+          
+          if (await file.exists()) {
+            return new Response(await file.text(), {
+              headers: { 
+                'Content-Type': 'text/css',
                 'Cache-Control': 'no-store'
               }
             });
@@ -132,6 +148,24 @@ ws.onclose = () => {
       });
     })
     
+    // FIXED: Serve CSS from .bertui/styles
+    .get('/styles/*', async ({ params, set }) => {
+      const filepath = join(stylesDir, params['*']);
+      const file = Bun.file(filepath);
+      
+      if (!await file.exists()) {
+        set.status = 404;
+        return 'CSS file not found';
+      }
+      
+      return new Response(await file.text(), {
+        headers: { 
+          'Content-Type': 'text/css',
+          'Cache-Control': 'no-store'
+        }
+      });
+    })
+    
     .get('/public/*', async ({ params, set }) => {
       const publicDir = join(root, 'public');
       const filepath = join(publicDir, params['*']);
@@ -165,6 +199,15 @@ ws.onclose = () => {
 function serveHTML(root, hasRouter, config) {
   const meta = config.meta || {};
   
+  // Find user's CSS files
+  const srcStylesDir = join(root, 'src', 'styles');
+  let userStylesheets = '';
+  
+  if (existsSync(srcStylesDir)) {
+    const cssFiles = require('fs').readdirSync(srcStylesDir).filter(f => f.endsWith('.css'));
+    userStylesheets = cssFiles.map(f => `  <link rel="stylesheet" href="/styles/${f}">`).join('\n');
+  }
+  
   const html = `
 <!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
@@ -183,6 +226,8 @@ function serveHTML(root, hasRouter, config) {
   ${meta.ogImage ? `<meta property="og:image" content="${meta.ogImage}">` : ''}
   
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+  
+  ${userStylesheets}
   
   <script type="importmap">
   {

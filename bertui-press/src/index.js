@@ -217,13 +217,17 @@ export class BertUIPress {
       mangle: false
     });
 
-    const html = marked(markdown);
+    let html = marked(markdown);
     const title = this.extractTitle(markdown) || 'Documentation';
     const currentPath = this.getOutputPath(filepath);
     
     // Calculate depth from output directory
     const relativeFromOut = relative(this.outDir, currentPath);
     const depth = relativeFromOut.split('/').length - 1;
+    
+    // Fix all internal links in content to use baseUrl
+    const baseUrl = this.config.baseUrl || '';
+    html = this.fixContentLinks(html, baseUrl);
     
     return this.template
       .replace(/\{\{title\}\}/g, title)
@@ -235,6 +239,25 @@ export class BertUIPress {
       .replace('{{content}}', html)
       .replace('{{navigation}}', this.renderNavigation(currentPath, depth))
       .replace('{{config}}', JSON.stringify(this.config));
+  }
+
+  fixContentLinks(html, baseUrl) {
+    if (!baseUrl) return html;
+    
+    // Fix relative links like ./page.html or ../page.html or page.html
+    // Convert them to absolute links with baseUrl
+    html = html.replace(/href="\.\.?\/([^"]+\.html)"/g, (match, path) => {
+      // Remove leading ../
+      const cleanPath = path.replace(/^(\.\.\/)+/, '');
+      return `href="${baseUrl}/${cleanPath}"`;
+    });
+    
+    // Fix links without ./ or ../
+    html = html.replace(/href="([^"\/][^"]*\.html)"/g, (match, path) => {
+      return `href="${baseUrl}/${path}"`;
+    });
+    
+    return html;
   }
 
   renderNavigation(currentPath, currentDepth) {
@@ -252,17 +275,23 @@ export class BertUIPress {
             </div>
           `;
         } else {
-          // For GitHub Pages, use repository-relative paths
+          // Get the HTML path relative to docs output
+          const htmlPath = item.path; // This is already like "getting-started/installation.html"
+          
+          // Create absolute URL with baseUrl
+          let href;
+          if (baseUrl) {
+            // Remove leading slash if present in htmlPath
+            const cleanPath = htmlPath.startsWith('/') ? htmlPath.slice(1) : htmlPath;
+            href = `${baseUrl}/${cleanPath}`;
+          } else {
+            href = `/${htmlPath}`;
+          }
+          
+          // Check if this is the current page
           const targetPath = this.getOutputPath(
             join(this.docsDir, item.path.replace('.html', '.md'))
           );
-          
-          // Get path relative to output directory (for GitHub Pages)
-          const relativeFromOut = relative(this.outDir, targetPath).replace(/\\/g, '/');
-          
-          // Use repository root relative path with baseUrl
-          const href = baseUrl + '/' + relativeFromOut;
-          
           const isActive = currentPath === targetPath;
           
           return `

@@ -1,19 +1,16 @@
-// src/build/css-builder.js
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import postcss from 'postcss';
-import autoprefixer from 'autoprefixer';
-import cssnano from 'cssnano';
+import { transform } from 'lightningcss';
 import logger from '../logger/logger.js';
 
 /**
- * Build and minify CSS for production
+ * Build and minify CSS for production using Lightning CSS
  * @param {string} srcPath - Source CSS file path
  * @param {string} destPath - Destination CSS file path
  */
 export async function buildCSS(srcPath, destPath) {
   try {
-    logger.info('Processing CSS...');
+    logger.info(`Processing CSS: ${srcPath.split('/').pop()}`);
     
     // Ensure destination directory exists
     const destDir = join(destPath, '..');
@@ -23,38 +20,38 @@ export async function buildCSS(srcPath, destPath) {
     
     // Read source CSS
     const css = await Bun.file(srcPath).text();
+    const originalSize = Buffer.byteLength(css);
     
-    // Process with PostCSS
-    const result = await postcss([
-      autoprefixer(),
-      cssnano({
-        preset: ['default', {
-          discardComments: { removeAll: true },
-          normalizeWhitespace: true,
-          colormin: true,
-          minifyFontValues: true,
-          minifySelectors: true,
-        }]
-      })
-    ]).process(css, { from: srcPath, to: destPath });
+    // Transform with Lightning CSS (blazing fast)
+    const { code } = transform({
+      filename: srcPath,
+      code: Buffer.from(css),
+      minify: true,
+      sourceMap: false,
+      targets: {
+        // Support last 2 versions of major browsers
+        chrome: 90 << 16,
+        firefox: 88 << 16,
+        safari: 14 << 16,
+        edge: 90 << 16
+      },
+      drafts: {
+        nesting: true // Enable CSS nesting
+      }
+    });
     
     // Write minified CSS
-    await Bun.write(destPath, result.css);
+    await Bun.write(destPath, code);
     
     // Calculate size reduction
-    const originalSize = (Buffer.byteLength(css) / 1024).toFixed(2);
-    const minifiedSize = (Buffer.byteLength(result.css) / 1024).toFixed(2);
-    const reduction = ((1 - Buffer.byteLength(result.css) / Buffer.byteLength(css)) * 100).toFixed(1);
+    const minifiedSize = code.length;
+    const originalKB = (originalSize / 1024).toFixed(2);
+    const minifiedKB = (minifiedSize / 1024).toFixed(2);
+    const reduction = ((1 - minifiedSize / originalSize) * 100).toFixed(1);
     
-    logger.success(`CSS minified: ${originalSize}KB → ${minifiedSize}KB (-${reduction}%)`);
+    logger.success(`CSS minified: ${originalKB}KB → ${minifiedKB}KB (-${reduction}%)`);
     
-    if (result.warnings().length > 0) {
-      result.warnings().forEach(warn => {
-        logger.warn(warn.toString());
-      });
-    }
-    
-    return { success: true, size: minifiedSize };
+    return { success: true, size: minifiedKB };
   } catch (error) {
     logger.error(`CSS build failed: ${error.message}`);
     throw error;

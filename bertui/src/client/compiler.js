@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, statSync } from 'fs';
-import { join, extname, relative } from 'path';
+import { join, extname, relative, dirname } from 'path';
 import logger from '../logger/logger.js';
 
 export async function compileProject(root) {
@@ -64,6 +64,14 @@ async function discoverRoutes(pagesDir) {
         await scanDirectory(fullPath, relativePath);
       } else if (entry.isFile()) {
         const ext = extname(entry.name);
+        
+        // FIXED: Ignore CSS files completely
+        if (ext === '.css') {
+          logger.debug(`Skipping CSS file: ${relativePath}`);
+          continue;
+        }
+        
+        // Only process valid page files
         if (['.jsx', '.tsx', '.js', '.ts'].includes(ext)) {
           const fileName = entry.name.replace(ext, '');
           
@@ -255,14 +263,26 @@ async function compileDirectory(srcDir, outDir, root) {
       const ext = extname(file);
       const relativePath = relative(join(root, 'src'), srcPath);
       
-      if (['.jsx', '.tsx', '.ts'].includes(ext)) {
+      // FIXED: Handle CSS files properly - copy to styles output
+      if (ext === '.css') {
+        const stylesOutDir = join(root, '.bertui', 'styles');
+        if (!existsSync(stylesOutDir)) {
+          mkdirSync(stylesOutDir, { recursive: true });
+        }
+        const cssOutPath = join(stylesOutDir, file);
+        await Bun.write(cssOutPath, Bun.file(srcPath));
+        logger.debug(`Copied CSS: ${relativePath}`);
+        stats.files++;
+      } else if (['.jsx', '.tsx', '.ts'].includes(ext)) {
         await compileFile(srcPath, outDir, file, relativePath);
         stats.files++;
       } else if (ext === '.js') {
         const outPath = join(outDir, file);
         let code = await Bun.file(srcPath).text();
         
-        code = fixImports(code);
+        // FIXED: Don't modify imports - let Bun handle them
+        // Only fix router imports
+        code = fixRouterImports(code, outPath, root);
         
         await Bun.write(outPath, code);
         logger.debug(`Copied: ${relativePath}`);
@@ -284,7 +304,10 @@ async function compileFile(srcPath, outDir, filename, relativePath) {
   try {
     let code = await Bun.file(srcPath).text();
     
-    code = fixImports(code);
+    // FIXED: Don't remove any imports - preserve them all
+    // Only fix router imports to point to compiled location
+    const outPath = join(outDir, filename.replace(/\.(jsx|tsx|ts)$/, '.js'));
+    code = fixRouterImports(code, outPath, process.cwd());
     
     const transpiler = new Bun.Transpiler({ 
       loader,
@@ -304,29 +327,31 @@ async function compileFile(srcPath, outDir, filename, relativePath) {
     
     compiled = fixRelativeImports(compiled);
     
-    const outFilename = filename.replace(/\.(jsx|tsx|ts)$/, '.js');
-    const outPath = join(outDir, outFilename);
-    
     await Bun.write(outPath, compiled);
-    logger.debug(`Compiled: ${relativePath} → ${outFilename}`);
+    logger.debug(`Compiled: ${relativePath} → ${filename.replace(/\.(jsx|tsx|ts)$/, '.js')}`);
   } catch (error) {
     logger.error(`Failed to compile ${relativePath}: ${error.message}`);
     throw error;
   }
 }
 
-function fixImports(code) {
-  code = code.replace(/import\s+['"]bertui\/styles['"]\s*;?\s*/g, '');
+// FIXED: New function - only fixes bertui/router imports
+function fixRouterImports(code, outPath, root) {
+  const buildDir = join(root, '.bertui', 'compiled');
+  const routerPath = join(buildDir, 'router.js');
   
+  // Calculate relative path from output file to router.js
+  const relativeToRouter = relative(dirname(outPath), routerPath).replace(/\\/g, '/');
+  const routerImport = relativeToRouter.startsWith('.') ? relativeToRouter : './' + relativeToRouter;
+  
+  // ONLY replace bertui/router imports
   code = code.replace(
     /from\s+['"]bertui\/router['"]/g,
-    "from '/compiled/router.js'"
+    `from '${routerImport}'`
   );
   
-  code = code.replace(
-    /from\s+['"]\.\.\/\.bertui\/compiled\/([^'"]+)['"]/g,
-    "from '/compiled/$1'"
-  );
+  // Remove bertui/styles imports (CSS handled separately)
+  code = code.replace(/import\s+['"]bertui\/styles['"]\s*;?\s*/g, '');
   
   return code;
 }
@@ -343,4 +368,3 @@ function fixRelativeImports(code) {
   
   return code;
 }
-
