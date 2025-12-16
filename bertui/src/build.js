@@ -26,7 +26,7 @@ export async function buildProduction(options = {}) {
   
   try {
     logger.info('Step 1: Compiling for production...');
-    await compileForBuild(root, buildDir);
+    const { routes } = await compileForBuild(root, buildDir);
     logger.success('Production compilation complete');
     
     logger.info('Step 2: Building CSS with Lightning CSS...');
@@ -35,7 +35,14 @@ export async function buildProduction(options = {}) {
     const publicDir = join(root, 'public');
     if (existsSync(publicDir)) {
       logger.info('Step 3: Copying public assets...');
-      cpSync(publicDir, outDir, { recursive: true });
+      const publicFiles = readdirSync(publicDir);
+      for (const file of publicFiles) {
+        const srcFile = join(publicDir, file);
+        const destFile = join(outDir, file);
+        if (statSync(srcFile).isFile()) {
+          cpSync(srcFile, destFile);
+        }
+      }
       logger.success('Public assets copied');
     } else {
       logger.info('Step 3: No public directory found, skipping...');
@@ -72,8 +79,8 @@ export async function buildProduction(options = {}) {
     
     logger.success('JavaScript bundled with tree-shaking');
     
-    logger.info('Step 5: Generating index.html...');
-    await generateProductionHTML(root, outDir, result);
+    logger.info('Step 5: Generating SEO-optimized HTML files...');
+    await generateProductionHTML(root, outDir, result, routes);
     
     rmSync(buildDir, { recursive: true });
     logger.info('Cleaned up .bertuibuild/');
@@ -144,6 +151,8 @@ async function compileForBuild(root, buildDir) {
     await generateBuildRouter(routes, buildDir);
     logger.info('Generated router for build');
   }
+  
+  return { routes };
 }
 
 async function discoverRoutes(pagesDir) {
@@ -356,7 +365,6 @@ async function compileBuildDirectory(srcDir, buildDir, root) {
         const outPath = join(buildDir, file);
         let code = await Bun.file(srcPath).text();
         
-        // CRITICAL FIX: Remove CSS imports
         code = removeCSSImports(code);
         code = fixBuildImports(code, srcPath, outPath, root);
         
@@ -373,7 +381,6 @@ async function compileBuildFile(srcPath, buildDir, filename, root) {
   try {
     let code = await Bun.file(srcPath).text();
     
-    // CRITICAL FIX: Remove CSS imports before transpilation
     code = removeCSSImports(code);
     
     const outFilename = filename.replace(/\.(jsx|tsx|ts)$/, '.js');
@@ -407,7 +414,6 @@ async function compileBuildFile(srcPath, buildDir, filename, root) {
   }
 }
 
-// NEW FUNCTION: Remove all CSS imports
 function removeCSSImports(code) {
   code = code.replace(/import\s+['"][^'"]*\.css['"];?\s*/g, '');
   code = code.replace(/import\s+['"]bertui\/styles['"]\s*;?\s*/g, '');
@@ -442,36 +448,67 @@ function fixRelativeImports(code) {
   return code;
 }
 
-async function generateProductionHTML(root, outDir, buildResult) {
-  const mainBundle = buildResult.outputs.find(o => 
-    o.path.includes('main') && o.kind === 'entry-point'
-  );
-  
-  if (!mainBundle) {
-    throw new Error('Could not find main bundle in build output');
+// IMPROVED: Extract meta using regex (works on raw source code)
+function extractMetaFromSource(code) {
+  try {
+    // Match: export const meta = { ... };
+    const metaRegex = /export\s+const\s+meta\s*=\s*\{([^}]+)\}/s;
+    const match = code.match(metaRegex);
+    
+    if (!match) return null;
+    
+    const metaContent = match[1];
+    const meta = {};
+    
+    // Extract key-value pairs
+    const pairs = metaContent.match(/(\w+)\s*:\s*(['"`])((?:(?!\2).)*)\2/g);
+    
+    if (!pairs) return null;
+    
+    pairs.forEach(pair => {
+      const [key, value] = pair.split(':').map(s => s.trim());
+      meta[key] = value.replace(/['"]/g, '');
+    });
+    
+    return meta;
+  } catch (error) {
+    return null;
   }
-  
-  const bundlePath = mainBundle.path.replace(outDir, '').replace(/^\//, '');
-  
-  // Find user CSS files
-  const srcStylesDir = join(root, 'src', 'styles');
-  let userStylesheets = '';
-  
-  if (existsSync(srcStylesDir)) {
-    const cssFiles = readdirSync(srcStylesDir).filter(f => f.endsWith('.css'));
-    userStylesheets = cssFiles.map(f => 
-      `  <link rel="stylesheet" href="/styles/${f.replace('.css', '.min.css')}">`
-    ).join('\n');
-  }
+}
+
+// IMPROVED: Render component to static HTML using JSDOM-like approach
+async function renderComponentToHTML(route, bundlePath, userStylesheets, meta) {
+  // For now, we'll create a basic shell with meta tags
+  // Full SSR would require running React server-side
   
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Built with BertUI - Lightning fast React development">
-  <title>BertUI App</title>
+  <title>${meta.title || 'BertUI App'}</title>
+  
+  <meta name="description" content="${meta.description || 'Built with BertUI - Lightning fast React development'}">
+  ${meta.keywords ? `<meta name="keywords" content="${meta.keywords}">` : ''}
+  ${meta.author ? `<meta name="author" content="${meta.author}">` : ''}
+  ${meta.themeColor ? `<meta name="theme-color" content="${meta.themeColor}">` : ''}
+  
+  <meta property="og:title" content="${meta.ogTitle || meta.title || 'BertUI App'}">
+  <meta property="og:description" content="${meta.ogDescription || meta.description || 'Built with BertUI'}">
+  ${meta.ogImage ? `<meta property="og:image" content="${meta.ogImage}">` : ''}
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${route}">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${meta.ogTitle || meta.title || 'BertUI App'}">
+  <meta name="twitter:description" content="${meta.ogDescription || meta.description || 'Built with BertUI'}">
+  ${meta.ogImage ? `<meta name="twitter:image" content="${meta.ogImage}">` : ''}
+  
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="canonical" href="${route}">
+  
 ${userStylesheets}
+  
   <script type="importmap">
   {
     "imports": {
@@ -482,13 +519,77 @@ ${userStylesheets}
     }
   }
   </script>
+  
+  <!-- SEO Preload Hints -->
+  <link rel="preconnect" href="https://esm.sh">
+  <link rel="dns-prefetch" href="https://esm.sh">
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <!-- App shell - JavaScript will hydrate this -->
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui">
+      <div style="text-align:center">
+        <h1 style="font-size:2rem;margin-bottom:1rem">${meta.title || 'Loading...'}</h1>
+        <p style="color:#666">${meta.description || 'Please wait while we load your content'}</p>
+      </div>
+    </div>
+  </div>
   <script type="module" src="/${bundlePath}"></script>
 </body>
 </html>`;
   
-  await Bun.write(join(outDir, 'index.html'), html);
-  logger.success('Generated index.html');
+  return html;
+}
+
+async function generateProductionHTML(root, outDir, buildResult, routes) {
+  const mainBundle = buildResult.outputs.find(o => 
+    o.path.includes('main') && o.kind === 'entry-point'
+  );
+  
+  if (!mainBundle) {
+    throw new Error('Could not find main bundle in build output');
+  }
+  
+  const bundlePath = mainBundle.path.replace(outDir, '').replace(/^[\/\\]/, '');
+  
+  const srcStylesDir = join(root, 'src', 'styles');
+  let userStylesheets = '';
+  
+  if (existsSync(srcStylesDir)) {
+    const cssFiles = readdirSync(srcStylesDir).filter(f => f.endsWith('.css'));
+    userStylesheets = cssFiles.map(f => 
+      `  <link rel="stylesheet" href="/styles/${f.replace('.css', '.min.css')}">`
+    ).join('\n');
+  }
+  
+  logger.info('Generating SEO-optimized HTML files...');
+  
+  for (const route of routes) {
+    if (route.type === 'dynamic') {
+      logger.info(`Skipping dynamic route: ${route.route}`);
+      continue;
+    }
+    
+    // Read source file and extract meta
+    const sourceCode = await Bun.file(route.path).text();
+    const meta = extractMetaFromSource(sourceCode) || {};
+    
+    logger.info(`Extracting meta for ${route.route}: ${JSON.stringify(meta)}`);
+    
+    // Generate HTML with meta tags and app shell
+    const html = await renderComponentToHTML(route.route, bundlePath, userStylesheets, meta);
+    
+    // Determine output path
+    let htmlPath;
+    if (route.route === '/') {
+      htmlPath = join(outDir, 'index.html');
+    } else {
+      const routeDir = join(outDir, route.route);
+      mkdirSync(routeDir, { recursive: true });
+      htmlPath = join(routeDir, 'index.html');
+    }
+    
+    await Bun.write(htmlPath, html);
+    logger.success(`Generated ${route.route === '/' ? 'index.html' : route.route + '/index.html'} with meta: ${meta.title || 'default'}`);
+  }
 }

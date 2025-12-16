@@ -166,6 +166,7 @@ ws.onclose = () => {
       });
     })
     
+    // Around line 60, update the route handler:
     .get('/public/*', async ({ params, set }) => {
       const publicDir = join(root, 'public');
       const filepath = join(publicDir, params['*']);
@@ -225,7 +226,7 @@ function serveHTML(root, hasRouter, config) {
   ${meta.ogDescription ? `<meta property="og:description" content="${meta.ogDescription || meta.description}">` : ''}
   ${meta.ogImage ? `<meta property="og:image" content="${meta.ogImage}">` : ''}
   
-  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   
   ${userStylesheets}
   
