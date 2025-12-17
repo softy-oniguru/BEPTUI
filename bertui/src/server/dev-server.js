@@ -1,4 +1,4 @@
-// src/server/dev-server.js - FIXED VERSION
+// src/server/dev-server.js - FIXED IMAGE SERVING
 import { Elysia } from 'elysia';
 import { watch } from 'fs';
 import { join, extname } from 'path';
@@ -13,6 +13,7 @@ export async function startDevServer(options = {}) {
   const compiledDir = join(root, '.bertui', 'compiled');
   const stylesDir = join(root, '.bertui', 'styles');
   const srcDir = join(root, 'src');
+  const publicDir = join(root, 'public');
   
   const config = await loadConfig(root);
   
@@ -30,10 +31,10 @@ export async function startDevServer(options = {}) {
       return serveHTML(root, hasRouter, config);
     })
     
-    // ✅ NEW: Serve images from src/images/
+    // ✅ FIX: Serve images from src/images/ (CRITICAL)
     .get('/images/*', async ({ params, set }) => {
-      const imagesDir = join(srcDir, 'images');
-      const filepath = join(imagesDir, params['*']);
+      const srcImagesDir = join(srcDir, 'images');
+      const filepath = join(srcImagesDir, params['*']);
       const file = Bun.file(filepath);
       
       if (!await file.exists()) {
@@ -47,12 +48,27 @@ export async function startDevServer(options = {}) {
       return new Response(file, {
         headers: { 
           'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=31536000'
+          'Cache-Control': 'no-cache' // Dev server = no cache
         }
       });
     })
     
-    // ✅ NEW: Serve any static asset from src/ (fonts, videos, etc.)
+    // ✅ Serve from public/ directory
+    .get('/public/*', async ({ params, set }) => {
+      const filepath = join(publicDir, params['*']);
+      const file = Bun.file(filepath);
+      
+      if (!await file.exists()) {
+        set.status = 404;
+        return 'File not found';
+      }
+      
+      return new Response(file, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+    })
+    
+    // ✅ Generic asset serving
     .get('/assets/*', async ({ params, set }) => {
       const filepath = join(srcDir, params['*']);
       const file = Bun.file(filepath);
@@ -68,7 +84,7 @@ export async function startDevServer(options = {}) {
       return new Response(file, {
         headers: { 
           'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=31536000'
+          'Cache-Control': 'no-cache'
         }
       });
     })
@@ -105,16 +121,6 @@ export async function startDevServer(options = {}) {
                 'Cache-Control': 'no-store'
               }
             });
-          }
-        }
-        
-        if (path.startsWith('public/')) {
-          const publicDir = join(root, 'public');
-          const filepath = join(publicDir, path.replace('public/', ''));
-          const file = Bun.file(filepath);
-          
-          if (await file.exists()) {
-            return new Response(file);
           }
         }
         
@@ -436,19 +442,6 @@ ws.onclose = () => {
       });
     })
     
-    .get('/public/*', async ({ params, set }) => {
-      const publicDir = join(root, 'public');
-      const filepath = join(publicDir, params['*']);
-      const file = Bun.file(filepath);
-      
-      if (!await file.exists()) {
-        set.status = 404;
-        return 'File not found';
-      }
-      
-      return new Response(file);
-    })
-    
     .listen(port);
   
   if (!app.server) {
@@ -458,7 +451,8 @@ ws.onclose = () => {
   
   logger.success(`🚀 Server running at http://localhost:${port}`);
   logger.info(`📁 Serving: ${root}`);
-  logger.info(`🖼️  Images available at: /images/*`);
+  logger.info(`🖼️  Images: /images/* → src/images/`);
+  logger.info(`📦 Public: /public/* → public/`);
   
   setupWatcher(root, compiledDir, clients, async () => {
     hasRouter = existsSync(join(compiledDir, 'router.js'));
@@ -536,7 +530,6 @@ ${userStylesheets}
   });
 }
 
-// ✅ NEW: Helper for image content types
 function getImageContentType(ext) {
   const types = {
     '.jpg': 'image/jpeg',
@@ -594,14 +587,12 @@ function setupWatcher(root, compiledDir, clients, onRecompile) {
     if (!filename) return;
     
     const ext = extname(filename);
-    
-    // ✅ Watch image changes too
     const watchedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif'];
     
     if (watchedExtensions.includes(ext)) {
       logger.info(`📝 File changed: ${filename}`);
       
-      // For images, just reload without recompiling
+      // For images, just reload
       if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif'].includes(ext)) {
         for (const client of clients) {
           try {

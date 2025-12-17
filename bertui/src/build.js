@@ -1,3 +1,4 @@
+// src/build.js - FIXED VERSION
 import { join, relative, basename, extname, dirname } from 'path';
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync } from 'fs';
 import logger from './logger/logger.js';
@@ -39,18 +40,12 @@ export async function buildProduction(options = {}) {
     logger.info('Step 2: Building CSS with Lightning CSS...');
     await buildAllCSS(root, outDir);
     
-    // ✅ NEW: Check if image optimization is available
     logger.info('Step 3: Checking image optimization tools...');
     const optimizationTools = await checkOptimizationTools();
     
     logger.info('Step 4: Copying and optimizing static assets...');
-    if (optimizationTools.length > 0) {
-      // Use WASM-powered optimization
-      await copyAllStaticAssets(root, outDir, true);
-    } else {
-      // Fallback: just copy images
-      await copyAllStaticAssets(root, outDir, false);
-    }
+    // ✅ FIX 1: Copy images from BOTH src/images/ and public/
+    await copyAllStaticAssets(root, outDir, optimizationTools.length > 0);
     
     logger.info('Step 5: Bundling JavaScript with Bun...');
     const buildEntry = join(buildDir, 'main.js');
@@ -75,9 +70,6 @@ export async function buildProduction(options = {}) {
       external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
       define: {
         'process.env.NODE_ENV': '"production"',
-        'process.env.PUBLIC_APP_NAME': JSON.stringify(envVars.PUBLIC_APP_NAME || 'BertUI App'),
-        'process.env.PUBLIC_API_URL': JSON.stringify(envVars.PUBLIC_API_URL || ''),
-        'process.env.PUBLIC_USERNAME': JSON.stringify(envVars.PUBLIC_USERNAME || ''),
         ...Object.fromEntries(
           Object.entries(envVars).map(([key, value]) => [
             `process.env.${key}`,
@@ -96,6 +88,7 @@ export async function buildProduction(options = {}) {
     logger.success('JavaScript bundled with tree-shaking');
     
     logger.info('Step 6: Generating SEO-optimized HTML files...');
+    // ✅ FIX 2: Generate HTML for ALL routes including index.html
     await generateProductionHTML(root, outDir, result, routes);
     
     rmSync(buildDir, { recursive: true });
@@ -131,16 +124,21 @@ export async function buildProduction(options = {}) {
   }
 }
 
-// ✅ UPDATED: Copy and optionally optimize static assets
+// ✅ FIX 3: Enhanced asset copying with proper directory structure
 async function copyAllStaticAssets(root, outDir, optimize = true) {
   const publicDir = join(root, 'public');
-  const srcDir = join(root, 'src');
+  const srcImagesDir = join(root, 'src', 'images');
   
   let assetsCopied = 0;
   let assetsOptimized = 0;
   
-  // Copy from public/
+  // Create images directory in dist/
+  const distImagesDir = join(outDir, 'images');
+  mkdirSync(distImagesDir, { recursive: true });
+  
+  // Copy from public/ to root of dist/
   if (existsSync(publicDir)) {
+    logger.info('Copying public/ assets...');
     if (optimize) {
       const result = await optimizeImages(publicDir, outDir);
       assetsOptimized += result.optimized;
@@ -149,16 +147,14 @@ async function copyAllStaticAssets(root, outDir, optimize = true) {
     }
   }
   
-  // Copy static assets from src/ (images, fonts, etc.)
-  if (existsSync(srcDir)) {
-    const assetsOutDir = join(outDir, 'assets');
-    mkdirSync(assetsOutDir, { recursive: true });
-    
+  // ✅ FIX: Copy from src/images/ to dist/images/
+  if (existsSync(srcImagesDir)) {
+    logger.info('Copying src/images/ to dist/images/...');
     if (optimize) {
-      const result = await optimizeImages(srcDir, assetsOutDir);
+      const result = await optimizeImages(srcImagesDir, distImagesDir);
       assetsOptimized += result.optimized;
     } else {
-      assetsCopied += copyImages(srcDir, assetsOutDir);
+      assetsCopied += copyImages(srcImagesDir, distImagesDir);
     }
   }
   
@@ -556,6 +552,7 @@ function extractMetaFromSource(code) {
   }
 }
 
+// ✅ FIX 4: Generate proper HTML files with correct meta tags
 async function generateProductionHTML(root, outDir, buildResult, routes) {
   const mainBundle = buildResult.outputs.find(o => 
     o.path.includes('main') && o.kind === 'entry-point'
@@ -578,18 +575,15 @@ async function generateProductionHTML(root, outDir, buildResult, routes) {
     ).join('\n');
   }
   
+  // ✅ Load config for default meta
   const { loadConfig } = await import('./config/loadConfig.js');
   const config = await loadConfig(root);
   const defaultMeta = config.meta || {};
   
   logger.info('Generating SEO-optimized HTML files...');
   
+  // ✅ FIX: Generate HTML for ALL routes (including dynamic as fallback)
   for (const route of routes) {
-    if (route.type === 'dynamic') {
-      logger.info(`Skipping dynamic route: ${route.route}`);
-      continue;
-    }
-    
     const sourceCode = await Bun.file(route.path).text();
     const pageMeta = extractMetaFromSource(sourceCode);
     const meta = { ...defaultMeta, ...pageMeta };
@@ -598,7 +592,24 @@ async function generateProductionHTML(root, outDir, buildResult, routes) {
       logger.info(`Extracted meta for ${route.route}: ${JSON.stringify(pageMeta)}`);
     }
     
-    const html = `<!DOCTYPE html>
+    const html = generateHTML(meta, route, bundlePath, userStylesheets);
+    
+    let htmlPath;
+    if (route.route === '/') {
+      htmlPath = join(outDir, 'index.html');
+    } else {
+      const routeDir = join(outDir, route.route);
+      mkdirSync(routeDir, { recursive: true });
+      htmlPath = join(routeDir, 'index.html');
+    }
+    
+    await Bun.write(htmlPath, html);
+    logger.success(`Generated ${route.route === '/' ? 'index.html' : route.route + '/index.html'}`);
+  }
+}
+
+function generateHTML(meta, route, bundlePath, userStylesheets) {
+  return `<!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
 <head>
   <meta charset="UTF-8">
@@ -642,17 +653,4 @@ ${userStylesheets}
   <script type="module" src="/${bundlePath}"></script>
 </body>
 </html>`;
-    
-    let htmlPath;
-    if (route.route === '/') {
-      htmlPath = join(outDir, 'index.html');
-    } else {
-      const routeDir = join(outDir, route.route);
-      mkdirSync(routeDir, { recursive: true });
-      htmlPath = join(routeDir, 'index.html');
-    }
-    
-    await Bun.write(htmlPath, html);
-    logger.success(`Generated ${route.route === '/' ? 'index.html' : route.route + '/index.html'} with meta: ${meta.title || 'default'}`);
-  }
 }
