@@ -1,4 +1,4 @@
-// src/build.js - COMPLETELY FIXED VERSION
+// src/build.js - COMPLETE FIXED VERSION v1.0.1
 import { join, relative, basename, extname, dirname } from 'path';
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync } from 'fs';
 import logger from './logger/logger.js';
@@ -45,8 +45,7 @@ export async function buildProduction(options = {}) {
     const optimizationTools = await checkOptimizationTools();
     
     logger.info('Step 4: Copying and optimizing static assets...');
-    // SKIP OPTIMIZATION FOR NOW - JUST COPY
-    await copyAllStaticAssets(root, outDir);
+    await copyAllStaticAssets(root, outDir, false);
     
     logger.info('Step 5: Bundling JavaScript with Bun...');
     const buildEntry = join(buildDir, 'main.js');
@@ -88,14 +87,15 @@ export async function buildProduction(options = {}) {
     
     logger.success('JavaScript bundled successfully');
     
-    // DEBUG: Show what was built
+    // ✅ DEBUG: Show what was built
     logger.info('Built outputs:');
     result.outputs.forEach((output, i) => {
-      logger.info(`  ${i + 1}. ${relative(outDir, output.path)} (${output.kind})`);
+      const relativePath = relative(outDir, output.path);
+      logger.info(`  ${i + 1}. ${relativePath} (${output.kind}, ${output.size} bytes)`);
     });
     
     logger.info('Step 6: Generating HTML files...');
-    // ✅ CRITICAL FIX: Generate HTML files
+    // ✅ CRITICAL FIX: Generate HTML files WITH CSS
     await generateProductionHTML(root, outDir, result, routes);
     
     // Clean up build directory
@@ -136,23 +136,29 @@ export async function buildProduction(options = {}) {
   }
 }
 
-async function copyAllStaticAssets(root, outDir) {
+// ✅ SIMPLE asset copying
+async function copyAllStaticAssets(root, outDir, optimize = true) {
   const publicDir = join(root, 'public');
   const srcImagesDir = join(root, 'src', 'images');
   
   logger.info('📦 Copying static assets...');
   
-  // Copy from public/ to dist/
+  // Copy from public/ to root of dist/
   if (existsSync(publicDir)) {
     logger.info('  Copying public/ directory...');
     copyImages(publicDir, outDir);
+  } else {
+    logger.info('  No public/ directory found');
   }
   
   // Copy from src/images/ to dist/images/
   if (existsSync(srcImagesDir)) {
+    logger.info('  Copying src/images/ to dist/images/...');
     const distImagesDir = join(outDir, 'images');
-    logger.info(`  Copying src/images/ to ${relative(root, distImagesDir)}/...`);
+    mkdirSync(distImagesDir, { recursive: true });
     copyImages(srcImagesDir, distImagesDir);
+  } else {
+    logger.info('  No src/images/ directory found');
   }
   
   logger.success('✅ All assets copied');
@@ -166,6 +172,7 @@ async function buildAllCSS(root, outDir) {
   
   if (existsSync(srcStylesDir)) {
     const cssFiles = readdirSync(srcStylesDir).filter(f => f.endsWith('.css'));
+    logger.info(`Found ${cssFiles.length} CSS files to minify`);
     for (const cssFile of cssFiles) {
       const srcPath = join(srcStylesDir, cssFile);
       const destPath = join(stylesOutDir, cssFile.replace('.css', '.min.css'));
@@ -545,14 +552,9 @@ function extractMetaFromSource(code) {
   }
 }
 
-// ✅ CRITICAL FIX: Generate HTML files
+// ✅ CRITICAL FIX: Generate HTML files WITH CSS
 async function generateProductionHTML(root, outDir, buildResult, routes) {
-  if (routes.length === 0) {
-    logger.warn('No routes found, skipping HTML generation');
-    return;
-  }
-  
-  logger.info(`Generating HTML files for ${routes.length} routes...`);
+  logger.info('Step 6: Generating HTML files with CSS...');
   
   // Find main JS bundle
   const mainBundle = buildResult.outputs.find(o => 
@@ -560,22 +562,41 @@ async function generateProductionHTML(root, outDir, buildResult, routes) {
   );
   
   if (!mainBundle) {
-    logger.error('Could not find main bundle in build output');
-    // List all outputs for debugging
-    logger.info('Available outputs:');
-    buildResult.outputs.forEach((o, i) => {
-      logger.info(`  ${i + 1}. ${o.path} (${o.kind})`);
-    });
+    logger.error('❌ Could not find main bundle');
     return;
   }
   
   const bundlePath = relative(outDir, mainBundle.path).replace(/\\/g, '/');
-  logger.info(`Main bundle: ${bundlePath}`);
+  logger.info(`Main JS bundle: /${bundlePath}`);
   
-  // Load config for default meta
+  // ✅ CRITICAL FIX: Get CSS files from DIST directory
+  const stylesOutDir = join(outDir, 'styles');
+  let cssLinks = '';
+  
+  if (existsSync(stylesOutDir)) {
+    const cssFiles = readdirSync(stylesOutDir).filter(f => f.endsWith('.min.css'));
+    logger.info(`Found ${cssFiles.length} CSS files: ${cssFiles.join(', ')}`);
+    
+    if (cssFiles.length > 0) {
+      // Create CSS link tags
+      cssLinks = cssFiles.map(cssFile => 
+        `  <link rel="stylesheet" href="/styles/${cssFile}">`
+      ).join('\n');
+      
+      logger.info(`Generated CSS links:\n${cssLinks}`);
+    } else {
+      logger.warn('⚠️  No .min.css files found in dist/styles/');
+    }
+  } else {
+    logger.error('❌ dist/styles/ directory not found!');
+  }
+  
+  // Load config
   const { loadConfig } = await import('./config/loadConfig.js');
   const config = await loadConfig(root);
   const defaultMeta = config.meta || {};
+  
+  logger.info(`Generating HTML for ${routes.length} routes...`);
   
   // Generate HTML for each route
   for (const route of routes) {
@@ -584,32 +605,30 @@ async function generateProductionHTML(root, outDir, buildResult, routes) {
       const pageMeta = extractMetaFromSource(sourceCode);
       const meta = { ...defaultMeta, ...pageMeta };
       
-      const html = generateHTML(meta, route, bundlePath);
+      const html = generateHTML(meta, route, bundlePath, cssLinks);
       
       let htmlPath;
       if (route.route === '/') {
         htmlPath = join(outDir, 'index.html');
       } else {
-        // Create directory for the route
-        const routeDir = join(outDir, route.route.slice(1)); // Remove leading slash
+        // Remove leading slash for directory creation
+        const routeDir = join(outDir, route.route.replace(/^\//, ''));
         mkdirSync(routeDir, { recursive: true });
         htmlPath = join(routeDir, 'index.html');
       }
       
       await Bun.write(htmlPath, html);
-      logger.success(`Generated: ${route.route === '/' ? 'index.html' : route.route + '/index.html'}`);
+      logger.success(`✅ Generated: ${route.route === '/' ? '/' : route.route}`);
+      
     } catch (error) {
       logger.error(`Failed to generate HTML for ${route.route}: ${error.message}`);
     }
   }
+  
+  logger.success('✨ All HTML files generated with CSS!');
 }
 
-function generateHTML(meta, route, bundlePath) {
-  const cssFiles = ['global.min.css', 'home.min.css'];
-  const stylesheets = cssFiles.map(css => 
-    `  <link rel="stylesheet" href="/styles/${css}">`
-  ).join('\n');
-  
+function generateHTML(meta, route, bundlePath, cssLinks) {
   return `<!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
 <head>
@@ -617,13 +636,26 @@ function generateHTML(meta, route, bundlePath) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${meta.title || 'BertUI App'}</title>
   
-  <meta name="description" content="${meta.description || 'Built with BertUI - Lightning fast React development'}">
+  <meta name="description" content="${meta.description || 'Built with BertUI'}">
   ${meta.keywords ? `<meta name="keywords" content="${meta.keywords}">` : ''}
   ${meta.author ? `<meta name="author" content="${meta.author}">` : ''}
+  ${meta.themeColor ? `<meta name="theme-color" content="${meta.themeColor}">` : ''}
+  
+  <meta property="og:title" content="${meta.ogTitle || meta.title || 'BertUI App'}">
+  <meta property="og:description" content="${meta.ogDescription || meta.description || 'Built with BertUI'}">
+  ${meta.ogImage ? `<meta property="og:image" content="${meta.ogImage}">` : ''}
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${route.route}">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${meta.twitterTitle || meta.ogTitle || meta.title || 'BertUI App'}">
+  <meta name="twitter:description" content="${meta.twitterDescription || meta.ogDescription || meta.description || 'Built with BertUI'}">
+  ${meta.twitterImage || meta.ogImage ? `<meta name="twitter:image" content="${meta.twitterImage || meta.ogImage}">` : ''}
   
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="canonical" href="${route.route}">
   
-${stylesheets}
+${cssLinks}
   
   <script type="importmap">
   {

@@ -1,6 +1,22 @@
 # BertUI Changelog
 # Changelog
+## 1.0.1 - Production Build Fix (2025-12-17)
 
+### 🐛 Critical Bug Fixes
+- **Fixed Production HTML Generation:** CSS files are now properly linked in all generated HTML files
+- **Fixed Build Reliability:** Production builds now correctly include all stylesheets
+- **Improved Error Handling:** Better logging and error messages during build process
+
+### ✅ What Works Now
+- ✅ All CSS files from `dist/styles/` are linked in every HTML page
+- ✅ Production builds work locally and on Vercel/Netlify
+- ✅ No more "Flash of Unstyled Content" (FOUC)
+- ✅ Stable v1.0.0 foundation with this critical patch
+
+### 🔧 Technical Details
+- Fixed `generateProductionHTML` function to read CSS from correct location
+- Ensured all `.min.css` files are included in every page
+- Improved build logging for debugging
 ## 1.0.0 - "Foundation" (2025-12-17)
 
 ### 🏁 The Beta Journey Culminates
