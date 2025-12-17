@@ -3,6 +3,15 @@
 [![Stable: v1.0.0](https://img.shields.io/badge/Stable-v1.0.0-brightgreen)](https://github.com/your-repo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+## 🚀 Production Ready (v1.0.3+)
+
+BertUI is now **battle-tested in production** with:
+- ✅ Single CSS file optimization (combined from all source CSS)
+- ✅ Vercel deployment verified
+- ✅ 38ms compilation speed maintained
+- ✅ Zero-config static site generation
+
+**Live Demo:** https://bertui-docswebsite.vercel.app/
 **The fastest, zero-config React static site generator. Now stable and production-ready.**
 Lightning-fast React development powered by Bun.
 ## 📝 Limitations & Notes
