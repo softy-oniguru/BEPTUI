@@ -1,9 +1,8 @@
-import { join, relative, basename } from 'path';
+import { join, relative, basename, extname, dirname } from 'path';
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync } from 'fs';
-import { extname, dirname } from 'path';
 import logger from './logger/logger.js';
 import { buildCSS } from './build/css-builder.js';
-import { loadEnvVariables, replaceEnvInCode } from './utils/env.js'; // ✅ IMPORT THIS!
+import { loadEnvVariables, replaceEnvInCode } from './utils/env.js';
 
 export async function buildProduction(options = {}) {
   const root = options.root || process.cwd();
@@ -26,7 +25,6 @@ export async function buildProduction(options = {}) {
   const startTime = Date.now();
   
   try {
-    // ✅ LOAD ENV VARS BEFORE COMPILATION!
     logger.info('Step 0: Loading environment variables...');
     const envVars = loadEnvVariables(root);
     if (Object.keys(envVars).length > 0) {
@@ -34,27 +32,15 @@ export async function buildProduction(options = {}) {
     }
     
     logger.info('Step 1: Compiling for production...');
-    const { routes } = await compileForBuild(root, buildDir, envVars); // ✅ PASS ENV VARS!
+    const { routes } = await compileForBuild(root, buildDir, envVars);
     logger.success('Production compilation complete');
     
     logger.info('Step 2: Building CSS with Lightning CSS...');
     await buildAllCSS(root, outDir);
     
-    const publicDir = join(root, 'public');
-    if (existsSync(publicDir)) {
-      logger.info('Step 3: Copying public assets...');
-      const publicFiles = readdirSync(publicDir);
-      for (const file of publicFiles) {
-        const srcFile = join(publicDir, file);
-        const destFile = join(outDir, file);
-        if (statSync(srcFile).isFile()) {
-          cpSync(srcFile, destFile);
-        }
-      }
-      logger.success('Public assets copied');
-    } else {
-      logger.info('Step 3: No public directory found, skipping...');
-    }
+    // ✅ FIX: Copy all static assets from src/ and public/
+    logger.info('Step 3: Copying static assets...');
+    await copyAllStaticAssets(root, outDir);
     
     logger.info('Step 4: Bundling JavaScript with Bun...');
     const buildEntry = join(buildDir, 'main.js');
@@ -77,13 +63,11 @@ export async function buildProduction(options = {}) {
         asset: '[name]-[hash].[ext]'
       },
       external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
-      // ✅ CRITICAL: Add define to replace process.env at bundle time!
       define: {
         'process.env.NODE_ENV': '"production"',
         'process.env.PUBLIC_APP_NAME': JSON.stringify(envVars.PUBLIC_APP_NAME || 'BertUI App'),
         'process.env.PUBLIC_API_URL': JSON.stringify(envVars.PUBLIC_API_URL || ''),
         'process.env.PUBLIC_USERNAME': JSON.stringify(envVars.PUBLIC_USERNAME || ''),
-        // Add all other env vars dynamically
         ...Object.fromEntries(
           Object.entries(envVars).map(([key, value]) => [
             `process.env.${key}`,
@@ -137,6 +121,78 @@ export async function buildProduction(options = {}) {
   }
 }
 
+// ✅ NEW FUNCTION: Copy all static assets
+async function copyAllStaticAssets(root, outDir) {
+  const publicDir = join(root, 'public');
+  const srcDir = join(root, 'src');
+  
+  let assetsCopied = 0;
+  
+  // Copy from public/
+  if (existsSync(publicDir)) {
+    assetsCopied += await copyStaticAssetsFromDir(publicDir, outDir, 'public');
+  }
+  
+  // Copy static assets from src/ (images, fonts, etc.)
+  if (existsSync(srcDir)) {
+    const assetsOutDir = join(outDir, 'assets');
+    mkdirSync(assetsOutDir, { recursive: true });
+    assetsCopied += await copyStaticAssetsFromDir(srcDir, assetsOutDir, 'src', true);
+  }
+  
+  logger.success(`Copied ${assetsCopied} static assets`);
+}
+
+// ✅ NEW FUNCTION: Recursively copy static assets
+async function copyStaticAssetsFromDir(sourceDir, targetDir, label, skipStyles = false) {
+  const staticExtensions = [
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif', // Images
+    '.woff', '.woff2', '.ttf', '.otf', '.eot', // Fonts
+    '.mp4', '.webm', '.ogg', '.mp3', '.wav', // Media
+    '.pdf', '.zip', '.json', '.xml', '.txt' // Documents
+  ];
+  
+  let copiedCount = 0;
+  
+  function copyRecursive(dir, targetBase) {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const srcPath = join(dir, entry.name);
+      const relativePath = relative(sourceDir, srcPath);
+      const destPath = join(targetBase, relativePath);
+      
+      if (entry.isDirectory()) {
+        // Skip node_modules, .bertui, etc.
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
+          continue;
+        }
+        
+        // Skip styles directory if requested
+        if (skipStyles && entry.name === 'styles') {
+          continue;
+        }
+        
+        mkdirSync(destPath, { recursive: true });
+        copyRecursive(srcPath, targetBase);
+      } else if (entry.isFile()) {
+        const ext = extname(entry.name);
+        
+        // Copy static assets only
+        if (staticExtensions.includes(ext.toLowerCase())) {
+          mkdirSync(dirname(destPath), { recursive: true });
+          cpSync(srcPath, destPath);
+          logger.debug(`Copied ${label}/${relativePath}`);
+          copiedCount++;
+        }
+      }
+    }
+  }
+  
+  copyRecursive(sourceDir, targetDir);
+  return copiedCount;
+}
+
 async function buildAllCSS(root, outDir) {
   const srcStylesDir = join(root, 'src', 'styles');
   const stylesOutDir = join(outDir, 'styles');
@@ -153,7 +209,6 @@ async function buildAllCSS(root, outDir) {
   }
 }
 
-// ✅ ACCEPT ENV VARS PARAMETER
 async function compileForBuild(root, buildDir, envVars) {
   const srcDir = join(root, 'src');
   const pagesDir = join(srcDir, 'pages');
@@ -168,7 +223,6 @@ async function compileForBuild(root, buildDir, envVars) {
     logger.info(`Found ${routes.length} routes`);
   }
   
-  // ✅ PASS ENV VARS TO COMPILATION
   await compileBuildDirectory(srcDir, buildDir, root, envVars);
   
   if (routes.length > 0) {
@@ -367,7 +421,6 @@ ${routeConfigs}
   await Bun.write(join(buildDir, 'router.js'), routerCode);
 }
 
-// ✅ ACCEPT ENV VARS PARAMETER
 async function compileBuildDirectory(srcDir, buildDir, root, envVars) {
   const files = readdirSync(srcDir);
   
@@ -378,21 +431,26 @@ async function compileBuildDirectory(srcDir, buildDir, root, envVars) {
     if (stat.isDirectory()) {
       const subBuildDir = join(buildDir, file);
       mkdirSync(subBuildDir, { recursive: true });
-      await compileBuildDirectory(srcPath, subBuildDir, root, envVars); // ✅ PASS IT DOWN
+      await compileBuildDirectory(srcPath, subBuildDir, root, envVars);
     } else {
       const ext = extname(file);
       
       if (ext === '.css') continue;
       
       if (['.jsx', '.tsx', '.ts'].includes(ext)) {
-        await compileBuildFile(srcPath, buildDir, file, root, envVars); // ✅ PASS IT HERE
+        await compileBuildFile(srcPath, buildDir, file, root, envVars);
       } else if (ext === '.js') {
         const outPath = join(buildDir, file);
         let code = await Bun.file(srcPath).text();
         
         code = removeCSSImports(code);
-        code = replaceEnvInCode(code, envVars); // ✅ REPLACE ENV VARS!
+        code = replaceEnvInCode(code, envVars);
         code = fixBuildImports(code, srcPath, outPath, root);
+        
+        // ✅ FIX: Add React import if needed
+        if (usesJSX(code) && !code.includes('import React')) {
+          code = `import React from 'react';\n${code}`;
+        }
         
         await Bun.write(outPath, code);
       }
@@ -400,7 +458,6 @@ async function compileBuildDirectory(srcDir, buildDir, root, envVars) {
   }
 }
 
-// ✅ ACCEPT ENV VARS PARAMETER
 async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
   const ext = extname(filename);
   const loader = ext === '.tsx' ? 'tsx' : ext === '.ts' ? 'ts' : 'jsx';
@@ -409,7 +466,7 @@ async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
     let code = await Bun.file(srcPath).text();
     
     code = removeCSSImports(code);
-    code = replaceEnvInCode(code, envVars); // ✅ REPLACE ENV VARS BEFORE TRANSPILATION!
+    code = replaceEnvInCode(code, envVars);
     
     const outFilename = filename.replace(/\.(jsx|tsx|ts)$/, '.js');
     const outPath = join(buildDir, outFilename);
@@ -429,7 +486,8 @@ async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
     
     let compiled = await transpiler.transform(code);
     
-    if (!compiled.includes('import React') && (compiled.includes('React.createElement') || compiled.includes('React.Fragment'))) {
+    // ✅ FIX: Add React import if needed
+    if (usesJSX(compiled) && !compiled.includes('import React')) {
       compiled = `import React from 'react';\n${compiled}`;
     }
     
@@ -440,6 +498,14 @@ async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
     logger.error(`Failed to compile ${filename}: ${error.message}`);
     throw error;
   }
+}
+
+function usesJSX(code) {
+  return code.includes('React.createElement') || 
+         code.includes('React.Fragment') ||
+         /<[A-Z]/.test(code) ||
+         code.includes('jsx(') ||
+         code.includes('jsxs(');
 }
 
 function removeCSSImports(code) {

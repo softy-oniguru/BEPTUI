@@ -20,13 +20,11 @@ export async function compileProject(root) {
     logger.info('Created .bertui/compiled/');
   }
   
-  // Load environment variables
   const envVars = loadEnvVariables(root);
   if (Object.keys(envVars).length > 0) {
     logger.info(`Loaded ${Object.keys(envVars).length} environment variables`);
   }
   
-  // Generate env.js file
   const envCode = generateEnvCode(envVars);
   await Bun.write(join(outDir, 'env.js'), envCode);
   
@@ -285,12 +283,14 @@ async function compileDirectory(srcDir, outDir, root, envVars) {
         const outPath = join(outDir, file);
         let code = await Bun.file(srcPath).text();
         
-        // Remove ALL CSS imports
         code = removeCSSImports(code);
-        // Inject environment variables
         code = replaceEnvInCode(code, envVars);
-        // Fix router imports
         code = fixRouterImports(code, outPath, root);
+        
+        // ✅ CRITICAL FIX: Ensure React import for .js files with JSX
+        if (usesJSX(code) && !code.includes('import React')) {
+          code = `import React from 'react';\n${code}`;
+        }
         
         await Bun.write(outPath, code);
         logger.debug(`Copied: ${relativePath}`);
@@ -312,13 +312,8 @@ async function compileFile(srcPath, outDir, filename, relativePath, root, envVar
   try {
     let code = await Bun.file(srcPath).text();
     
-    // CRITICAL FIX: Remove ALL CSS imports before transpilation
     code = removeCSSImports(code);
-    
-    // Remove dotenv imports (not needed in browser)
     code = removeDotenvImports(code);
-    
-    // Inject environment variables
     code = replaceEnvInCode(code, envVars);
     
     const outPath = join(outDir, filename.replace(/\.(jsx|tsx|ts)$/, '.js'));
@@ -336,7 +331,8 @@ async function compileFile(srcPath, outDir, filename, relativePath, root, envVar
     });
     let compiled = await transpiler.transform(code);
     
-    if (!compiled.includes('import React') && (compiled.includes('React.createElement') || compiled.includes('React.Fragment'))) {
+    // ✅ CRITICAL FIX: Always add React import if JSX is present
+    if (usesJSX(compiled) && !compiled.includes('import React')) {
       compiled = `import React from 'react';\n${compiled}`;
     }
     
@@ -350,29 +346,25 @@ async function compileFile(srcPath, outDir, filename, relativePath, root, envVar
   }
 }
 
-// NEW FUNCTION: Remove all CSS imports
+// ✅ NEW: Detect if code uses JSX
+function usesJSX(code) {
+  return code.includes('React.createElement') || 
+         code.includes('React.Fragment') ||
+         /<[A-Z]/.test(code) || // Detects JSX tags like <Component>
+         code.includes('jsx(') || // Runtime JSX
+         code.includes('jsxs('); // Runtime JSX
+}
+
 function removeCSSImports(code) {
-  // Remove CSS imports (with or without quotes, single or double)
-  // Matches: import './styles.css', import "./styles.css", import "styles.css", import 'styles.css'
   code = code.replace(/import\s+['"][^'"]*\.css['"];?\s*/g, '');
-  
-  // Also remove bertui/styles imports
   code = code.replace(/import\s+['"]bertui\/styles['"]\s*;?\s*/g, '');
-  
   return code;
 }
 
-// NEW FUNCTION: Remove dotenv imports and dotenv.config() calls
 function removeDotenvImports(code) {
-  // Remove: import dotenv from 'dotenv'
   code = code.replace(/import\s+\w+\s+from\s+['"]dotenv['"]\s*;?\s*/g, '');
-  
-  // Remove: import { config } from 'dotenv'
   code = code.replace(/import\s+\{[^}]+\}\s+from\s+['"]dotenv['"]\s*;?\s*/g, '');
-  
-  // Remove: dotenv.config()
   code = code.replace(/\w+\.config\(\s*\)\s*;?\s*/g, '');
-  
   return code;
 }
 
