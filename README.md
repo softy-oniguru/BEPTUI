@@ -1,41 +1,39 @@
 # BertUI ⚡
 
-**Lightning-fast React development powered by Bun.**
+[![Stable: v1.0.0](https://img.shields.io/badge/Stable-v1.0.0-brightgreen)](https://github.com/your-repo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Our Philosophy:** We're not trying to outshine Vite or be the next Next.js. BertUI is a **fast, simple, joy-to-use** framework built for **speed and ease**. Write regular React code you already know - the only new thing to learn is our `Link` component. That's it!
+**The fastest, zero-config React static site generator. Now stable and production-ready.**
+Lightning-fast React development powered by Bun.
+## 📝 Limitations & Notes
 
-## ⚡ Speed Stats
+### Image Handling
+BertUI automatically serves and copies images from two specific directories:
+- `src/images/` → Available at `/images/*` in development and copied to `dist/images/` in production
+- `public/` → Available at `/*` and copied to `dist/` root
 
-```
-✨ Production Build:  35ms (50ms first time)
-🚀 Dev Server Start:  16ms  
-🔥 Hot Module Reload: <50ms
-```
+**Important:** Images referenced in your JSX/TSX that are located outside these directories (e.g., `../assets/` or absolute paths) will cause compilation errors. Always place project images in `src/images/` or `public/`.
 
-[📊 See Full Performance Breakdown](#-performance-we-can-brag-about-this)
+## ⚠️ Important Notice - CSS Animations Temporarily Unavailable
 
----
+**The built-in CSS animation utilities have been temporarily removed** due to compatibility issues with `bun.build`. We're working on a solution and they will be back in an upcoming release.
 
-## 🙏 Our Sincere Apologies
+**What this means:**
+- The 15+ animation classes (`.fadein`, `.scalein`, `.bouncein`, etc.) are not currently available
+- You can still use your own CSS animations or external libraries
+- All other BertUI features work normally
 
-> We must apologize profusely for the **2-3 seconds** it takes to install BertUI for the first time. 😔
->
-> This is Bun's caching system (not our fault!), but we'll take the blame. After that first install, everything is **instant**. ⚡
+**We apologize for any inconvenience caused.** This feature will return soon! 🚀
 
 ---
 
 ## Features
 
-- ⚡ **Blazing Fast** - 35ms builds, 16ms dev server startup
-- 📁 **File-Based Routing** - Zero config, just create files
-- 🔥 **Hot Module Replacement** - Instant updates via WebSocket
+- ⚡ **Blazing Fast** - Built on Bun
+- 📁 **File-Based Routing** - Zero config routing
+- 🔥 **Hot Module Replacement** - Instant updates
 - 📦 **Zero Config** - Works out of the box
-- 🎨 **CSS Import Support** - Import styles directly in components
-- 🔐 **Environment Variables** - `BERTUI_` and `PUBLIC_` prefix support
-- 🚀 **Production Ready** - SEO-optimized HTML, tree-shaking, minification
-- 📚 **External Libraries** - Full npm ecosystem support
-
----
+- 🚀 **Production Ready** - Optimized builds
 
 ## Quick Start
 
@@ -47,212 +45,73 @@ bun run dev
 ```
 
 This creates a complete BertUI project with:
-- ✅ Pre-configured file structure
-- ✅ Sample pages with routing
-- ✅ Beautiful example components
-- ✅ CSS styling examples
-- ✅ All dependencies installed
+- Pre-configured file structure
+- Sample pages with routing
+- Beautiful example components
+- All dependencies installed
 
 ### Manual Installation (Advanced)
+If you want to configure everything yourself:
 ```bash
 bun add bertui react react-dom
 ```
 
-Then manually set up:
-- Project structure (`src/pages/`, `src/main.jsx`)
+Then you'll need to manually set up:
+- Project structure (`src/pages/`, `src/main.jsx`, etc.)
 - Router configuration
 - Build configuration
 
-**💡 Tip:** Use `bunx create-bertui` for the best experience!
-
----
+**Note:** We recommend using `bunx create-bertui` for the best experience!
 
 ## Commands
-
 ```bash
 bertui dev         # Start dev server
 bertui build       # Build for production
 ```
 
----
+## File-Based Routing
 
-## 📁 File-Based Routing
+BertUI now has **complete file-based routing**! Here's what's included:
 
-BertUI has **complete file-based routing** with zero configuration!
+### 📁 Features
 
-### Basic Routes
+#### ✅ File-Based Routing
 ```
 src/pages/index.jsx       → /
 src/pages/about.jsx       → /about
 src/pages/blog/index.jsx  → /blog
 ```
 
-### Dynamic Routes
+#### ✅ Dynamic Routes
 ```
 src/pages/user/[id].jsx           → /user/:id
 src/pages/blog/[slug].jsx         → /blog/:slug
 src/pages/shop/[cat]/[prod].jsx   → /shop/:cat/:prod
 ```
 
-### Navigation
+#### ✅ Navigation Components
 ```jsx
-import { Link, useRouter } from 'bertui/router';
+import { Link, navigate } from 'bertui/router';
 
-// Link component (the only new thing to learn!)
+// Link component
 <Link to="/about">About</Link>
 
 // Programmatic navigation
-function MyComponent() {
-  const { navigate } = useRouter();
-  
-  return (
-    <button onClick={() => navigate('/dashboard')}>
-      Go to Dashboard
-    </button>
-  );
-}
+const { navigate } = useRouter();
+navigate('/dashboard');
 ```
 
-### Route Parameters
+#### ✅ Route Parameters
 ```jsx
-// src/pages/user/[id].jsx
 export default function UserProfile({ params }) {
   return <div>User ID: {params.id}</div>;
 }
 ```
 
----
-
-## 🎨 Styling
-
-### CSS Imports (v0.3.7+)
-```jsx
-import '../styles/home.css';
-
-export default function Home() {
-  return <div className="home-container">Content</div>;
-}
-```
-
-### Global Styles
-Add global styles in `src/styles/global.css` - automatically included.
-
----
-
-## 🔐 Environment Variables
-
-Create a `.env` file:
-
-```env
-# Exposed to browser (safe for client-side)
-PUBLIC_APP_NAME=My Awesome App
-BERTUI_API_URL=https://api.example.com
-
-# Server-side only (NOT exposed to browser)
-SECRET_API_KEY=super_secret_key
-```
-
-Access in your code:
-```jsx
-const appName = process.env.PUBLIC_APP_NAME;
-const apiUrl = process.env.BERTUI_API_URL;
-```
-
-> **Important:** Only `PUBLIC_` and `BERTUI_` prefixed variables are exposed to the browser!
-
----
-
-## 🏷️ SEO & Meta Tags
-
-> **⚠️ Note:** Meta tag functionality exists but is **NOT YET PUSHED TO NPM**. Coming in the next release!
-
-Add per-page metadata:
-
-```jsx
-// src/pages/about.jsx
-export const meta = {
-  title: "About Us - My App",
-  description: "Learn about our amazing team",
-  keywords: "about, team, company",
-  ogImage: "/about-og.png",
-  ogTitle: "About Us",
-  ogDescription: "Our story"
-};
-
-export default function About() {
-  return <div>About content...</div>;
-}
-```
-
-### How Meta Tags Work
-
-| Environment | Status | Why |
-|-------------|--------|-----|
-| **Dev Server** (`bertui dev`) | ❌ Not functional | Dev server only compiles `.js` files for maximum speed |
-| **Production Build** (`bertui build`) | ✅ Fully functional | Generates separate HTML per route with meta tags for SEO |
-
-**Design Philosophy:** Dev speed is priority #1. SEO matters in production, not development.
-
-> Always test meta tags with: `bun run build` → `bun run preview`
-
----
-
-## ⚡ Performance (We Can Brag About This!)
-
-### Real Build Times
-```bash
-$ bun run build
-✨ Build complete in 35ms
-```
-
-> **Note:** First build takes ~50ms (Bun caches modules). Second build onwards: blazing 35ms!
-
-### Real Dev Server
-```bash
-$ bun run dev
-✅ Compiled 6 files in 16ms
-🚀 Server running at http://localhost:3000
-```
-
-### Comparison
-
-| Framework | Build Time | Dev Startup | Notes |
-|-----------|------------|-------------|-------|
-| **BertUI** | **35ms** | **16ms** | Subsequent builds |
-| **BertUI (first)** | **50ms** | **16ms** | First build only |
-| Vite | 2-5s | 300-800ms | With plugins |
-| Create React App | 15-30s | 5-15s | Very slow |
-| Next.js | 3-8s | 1-3s | Full-featured |
-
-### Why So Fast?
-
-**Our Philosophy: Use Bun's Native Tools**
-- ✅ **Bun** runtime (3x faster than Node.js)
-- ✅ **Bun.build** for bundling (10x faster than Webpack)
-- ✅ **Bun.Transpiler** for JSX (native, instant)
-- ✅ **Lightning CSS** for styles (100x faster, written in Rust!)
-- ✅ **Elysia** for dev server (Bun-native HTTP)
-- ✅ **File-based routing** (no parsing overhead)
-
-**Result:** No plugins, no complexity, just pure speed.
-
----
-
-## 📦 External Libraries
-
-BertUI supports the full npm ecosystem:
-
-```bash
-bun add axios @tanstack/react-query
-```
-
-Then import normally:
-```jsx
-import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
-```
-
----
+#### ✅ Backward Compatible
+- Still works with `src/main.jsx` if no `pages/` directory
+- Automatically detects routing mode
+- No breaking changes!
 
 ## 📊 How It Works
 
@@ -264,7 +123,14 @@ import { useQuery } from '@tanstack/react-query';
    └── user/[id].jsx
    ```
 
-2. **BertUI discovers routes automatically**
+2. **BertUI scans and generates routes:**
+   ```javascript
+   [
+     { path: '/', file: 'index.jsx' },
+     { path: '/about', file: 'about.jsx' },
+     { path: '/user/:id', file: 'user/[id].jsx', isDynamic: true }
+   ]
+   ```
 
 3. **Router code is auto-generated:**
    - Creates `.bertui/router.js`
@@ -272,57 +138,19 @@ import { useQuery } from '@tanstack/react-query';
    - Provides routing logic
 
 4. **Dev server serves SPA:**
-   - All routes serve the same HTML shell
+   - All routes serve the same HTML
    - Client-side routing handles navigation
    - HMR updates routes on file changes
-
-5. **Production build generates:**
-   - Separate optimized HTML per route
-   - Minified CSS with Lightning CSS
-   - Tree-shaken JavaScript bundles
-   - SEO-optimized meta tags
-
----
-
-## 🎯 What Makes BertUI Different?
-
-### What We're NOT
-- ❌ A Vite replacement (though we're faster 😏)
-- ❌ The next Next.js
-- ❌ A full-stack framework
-- ❌ Complicated
-
-### What We ARE
-- ✅ The **fastest** React dev experience
-- ✅ Perfect for SPAs and static sites
-- ✅ Built for developers who value speed and simplicity
-- ✅ **Speed first, joy second, everything else third**
-
-### Key Principles
-1. 🚀 **Use the fastest tool for every job**
-2. 🎓 **Zero learning curve** - just React
-3. 📦 **No magic** - transparent and simple
-4. ⚡ **Eliminate all unnecessary abstraction**
-
----
 
 ## 🎓 Usage Example
 
 ```jsx
 // src/pages/index.jsx
 import { Link } from 'bertui/router';
-import '../styles/home.css';
-
-export const meta = {
-  title: "Home - My App",
-  description: "Welcome to my awesome app"
-};
 
 export default function Home() {
-  const apiUrl = process.env.BERTUI_API_URL;
-  
   return (
-    <div className="home-container">
+    <div>
       <h1>Welcome to My App!</h1>
       <nav>
         <Link to="/about">About</Link>
@@ -344,86 +172,42 @@ export default function UserProfile({ params }) {
 }
 ```
 
----
+## 📈 Performance
 
-## 🚀 Deployment
+- **Fast compilation:** Bun's speed + code splitting
+- **Small bundles:** Each route is a separate chunk
+- **Quick HMR:** Only recompiles changed files
+- **Smart routing:** Static routes matched first
 
-BertUI outputs a standard static `dist/` folder:
+## 🐛 Error Handling
 
-### Vercel
-```bash
-bunx vercel
-```
+- Missing routes → Auto 404 page
+- Invalid pages → Compilation error with details
+- Runtime errors → Preserved in dev mode
 
-### Netlify
-```bash
-bunx netlify deploy
-```
+## 🎯 Next Steps
 
-### Static Hosting
-Upload `dist/` to any static host (GitHub Pages, Cloudflare Pages, AWS S3, etc.)
+### Recommended Enhancements:
+1. **Layouts** - Wrap pages with shared layouts
+2. **Middleware** - Auth, logging, etc.
+3. **Data Loading** - Fetch data before rendering
+4. **API Routes** - Backend API in `pages/api/`
+5. **Static Generation** - Pre-render at build time
 
----
+### Production Build
+Update `build.js` to:
+- Generate static HTML for each route
+- Create optimized bundles per route
+- Handle dynamic routes appropriately
 
-## 🐛 Troubleshooting
+## 🏁 Conclusion
 
-### First Build Seems Slow?
-First build takes ~50ms (Bun caches modules). Every build after: blazing 35ms. Run it twice! 😉
+BertUI now has **production-ready file-based routing** that's:
+- ⚡ **Fast** - Built on Bun
+- 🎯 **Simple** - Zero config
+- 💪 **Powerful** - Dynamic routes, params, navigation
+- 🔥 **Modern** - HMR, code splitting, SPA
 
-### First Install Taking 2-3 Seconds?
-That's Bun caching packages. We know... those precious 2 seconds. We're deeply sorry! 😅 (It's Bun's fault, not ours!)
-
-### Environment Variables Not Working
-1. Ensure variables are prefixed with **`PUBLIC_`** or **`BERTUI_`**
-2. **Restart dev server** after `.env` changes
-3. Test with production build: `bun run build`
-
-### Meta Tags Not Showing
-Remember: Meta tags only work in **production builds**, not dev server. This is by design for maximum dev speed.
-
-### CSS Not Loading
-Make sure you're importing CSS in your components:
-```jsx
-import '../styles/your-style.css';
-```
-
----
-
-## 🎯 Roadmap
-
-- [x] File-based routing
-- [x] Dynamic routes
-- [x] CSS import support
-- [x] Environment variables
-- [x] SEO meta tags
-- [x] Meta tags pushed to npm 
-- [ ] Layouts and nested routing
-- [ ] API routes
-- [ ] MDX support
-- [ ] Static generation improvements
-
----
-
-## 📖 Learn More
-
-- [GitHub Repository](https://github.com/BunElysiaReact/BERTUI)
-- [Bun Documentation](https://bun.sh/docs)
-- [React Documentation](https://react.dev)
-
----
-
-## 📄 License
+## License
 
 MIT
-
----
-
-## 🙌 Contributing
-
-Contributions are welcome! Please open an issue or PR on GitHub.
-
----
-
-**Made with ⚡ speed and ❤️ by developers who hate waiting**
-
-*BertUI - Fast, Simple, Joyful React Development*

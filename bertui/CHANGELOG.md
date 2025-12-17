@@ -1,4 +1,77 @@
-## 0.3.9 (Latest)
+# BertUI Changelog
+# Changelog
+
+## 1.0.0 - "Foundation" (2025-12-17)
+
+### 🏁 The Beta Journey Culminates
+This release marks BertUI's transition from **public beta to stable production-ready software**. The previous 35 beta versions (v0.1.0 through v0.4.6) represented an intense, user-driven sprint to harden every core feature. That phase is now complete.
+
+With v1.0.0, BertUI commits to Semantic Versioning. The core API is stable, and future changes will be carefully managed for compatibility.
+
+### ✨ What's New & Stable
+All the speed, zero-config philosophy, and features from the beta are now solidified:
+
+*   **Blazing Performance:** Compilation in milliseconds, HMR updates under 50ms, and a dev server start under 100ms.
+*   **Zero-Config React:** Full JSX/TSX support with automatic React injection. Just write components.
+*   **File-Based Routing:** Intuitive routing via the `src/pages/` directory.
+*   **Complete Static Site Generation:** Production builds create optimized, SEO-ready static HTML for every route.
+*   **Robust Asset Pipeline:** Reliable copying of images from `src/images/` and `public/`.
+*   **Built-in CSS Pipeline:** Global and component-scoped CSS with LightningCSS minification.
+*   **Professional DX:** Full-screen error overlay, environment variable support, and clear logging.
+
+### ✅ Resolved from Beta
+The critical issues reported during the beta are now closed:
+*   Fixed automatic React import injection.
+*   Fixed static asset copying for production builds.
+*   Fixed HTML file generation for all routes.
+*   Added comprehensive error overlay.
+
+### 🚀 Getting Started
+New users should start here. The foundational API is stable for production use.
+
+**Previous Beta Versions:** The changelog for the rapid iteration phase (v0.1.0 - v0.4.6) is preserved below for transparency.
+<hr>
+
+## 0.4.7 (Latest Beta) - Build System Overhaul
+### ✨ New Features
+- **Complete Production Build:** Full static site generation with SEO-optimized HTML for all routes
+- **Multi-Route HTML Generation:** Automatic HTML file creation for discovered routes with proper meta tags
+- **Reliable Asset Pipeline:** Robust static file copying from both `/src/images/` and `/public/` directories
+- **Build Logging:** Enhanced build progress and debugging information
+
+### 🐛 Bug Fixes
+- Fixed production build hanging on WASM image optimization
+- Resolved missing HTML file generation in dist folder
+- Fixed recursive directory structure for production builds
+- Improved build reliability and error handling
+- Fixed asset copying for nested image directories
+
+### 🔧 Internal Improvements
+- Simplified image optimization (switched to reliable file copying)
+- Enhanced build configuration with better defaults
+- Improved error reporting during compilation
+
+## 0.4.5 - Asset Pipeline Fix
+### 🐛 Bug Fixes
+- **Critical Fix:** Static assets now correctly copy to dist folder during build
+- Fixed recursive directory copying for images and other assets
+- Improved logging for asset copying process
+- Resolved empty `dist/images/` directory issue
+
+## 0.4.2 - Developer Experience
+### ✨ New Features
+- **Error Overlay:** Full-screen error overlay for compilation and runtime errors
+- **Better Stack Traces:** Improved error message formatting and file references
+- **Enhanced HMR:** More reliable hot module replacement with visual feedback
+
+## 0.4.0 - Core Stability
+### 🐛 Bug Fixes
+- **Critical Fix:** Automatic React import injection now works correctly
+- Fixed JSX transpilation without manual React imports
+- Restored "Zero Config" promise for React development
+- Resolved `ReferenceError: React is not defined` errors
+
+## 0.3.9
 ### ✨ New Features
 - **CSS Import Support:** Templates now properly support external CSS imports
 - **External Library Support:** Full support for importing external libraries (loggers, utilities, etc.)
@@ -45,3 +118,9 @@ Fixed missing client-exports.js module error
 
 ### 📦 Installation & Setup
 * **`create-bertui`:** Use `bunx create-bertui <app-name>` for instant setup
+
+---
+
+**Note:** Version 0.4.7 represents a significant milestone where all critical bugs from the beta phase have been resolved. The framework is now stable and production-ready for static site generation with React.
+
+**Status:** Beta - Ready for production use

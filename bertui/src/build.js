@@ -46,7 +46,7 @@ export async function buildProduction(options = {}) {
     
     logger.info('Step 4: Copying and optimizing static assets...');
     // SKIP OPTIMIZATION FOR NOW - JUST COPY
-    await copyAllStaticAssets(root, outDir, false);
+    await copyAllStaticAssets(root, outDir);
     
     logger.info('Step 5: Bundling JavaScript with Bun...');
     const buildEntry = join(buildDir, 'main.js');
@@ -136,31 +136,26 @@ export async function buildProduction(options = {}) {
   }
 }
 
-// ✅ SIMPLE asset copying
-async function copyAllStaticAssets(root, outDir, optimize = true) {
+async function copyAllStaticAssets(root, outDir) {
   const publicDir = join(root, 'public');
   const srcImagesDir = join(root, 'src', 'images');
   
-  // ALWAYS use simple copy for now
-  logger.info('Using simple asset copy (optimization disabled)...');
+  logger.info('📦 Copying static assets...');
   
-  // Copy from public/ to root of dist/
+  // Copy from public/ to dist/
   if (existsSync(publicDir)) {
-    logger.info('📁 Copying public/ directory...');
+    logger.info('  Copying public/ directory...');
     copyImages(publicDir, outDir);
-  } else {
-    logger.info('No public/ directory found');
   }
   
   // Copy from src/images/ to dist/images/
   if (existsSync(srcImagesDir)) {
-    logger.info('🖼️  Copying src/images/ to dist/images/...');
     const distImagesDir = join(outDir, 'images');
-    mkdirSync(distImagesDir, { recursive: true });
+    logger.info(`  Copying src/images/ to ${relative(root, distImagesDir)}/...`);
     copyImages(srcImagesDir, distImagesDir);
-  } else {
-    logger.info('No src/images/ directory found');
   }
+  
+  logger.success('✅ All assets copied');
 }
 
 async function buildAllCSS(root, outDir) {

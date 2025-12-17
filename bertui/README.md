@@ -1,5 +1,9 @@
 # BertUI ⚡
 
+[![Stable: v1.0.0](https://img.shields.io/badge/Stable-v1.0.0-brightgreen)](https://github.com/your-repo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+**The fastest, zero-config React static site generator. Now stable and production-ready.**
 Lightning-fast React development powered by Bun.
 
 ## ⚠️ Important Notice - CSS Animations Temporarily Unavailable
