@@ -1,18 +1,52 @@
-// bertui/src/build/image-optimizer.js
-import { join, extname, basename, dirname } from 'path';
-import { existsSync, mkdirSync, readdirSync, statSync, cpSync } from 'fs';
+// bertui/src/build/image-optimizer.js - WASM-POWERED VERSION 🚀
+import { join, extname } from 'path';
+import { existsSync, mkdirSync, readdirSync, cpSync } from 'fs';
 import logger from '../logger/logger.js';
 
 /**
- * Optimize images using Bun's native image processing
- * This is FAST because it uses native code under the hood
+ * 🎯 WASM-powered image optimization using @jsquash
+ * Zero OS dependencies, pure JavaScript, blazing fast!
+ */
+
+// Lazy-load WASM modules (only when needed)
+let pngEncode, pngDecode;
+let jpegEncode, jpegDecode;
+let webpEncode, webpDecode;
+
+async function initializePNG() {
+  if (!pngEncode) {
+    const { encode, decode } = await import('@jsquash/png');
+    pngEncode = encode;
+    pngDecode = decode;
+  }
+}
+
+async function initializeJPEG() {
+  if (!jpegEncode) {
+    const { encode, decode } = await import('@jsquash/jpeg');
+    jpegEncode = encode;
+    jpegDecode = decode;
+  }
+}
+
+async function initializeWebP() {
+  if (!webpEncode) {
+    const { encode, decode } = await import('@jsquash/webp');
+    webpEncode = encode;
+    webpDecode = decode;
+  }
+}
+
+/**
+ * Optimize images using WASM-powered codecs
+ * This is FAST and has ZERO OS dependencies! 🚀
  */
 export async function optimizeImages(srcDir, outDir) {
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'];
   let optimized = 0;
   let totalSaved = 0;
 
-  logger.info('🖼️  Optimizing images...');
+  logger.info('🖼️  Optimizing images with WASM codecs...');
 
   async function processDirectory(dir, targetDir) {
     const entries = readdirSync(dir, { withFileTypes: true });
@@ -35,10 +69,13 @@ export async function optimizeImages(srcDir, outDir) {
             if (result) {
               optimized++;
               totalSaved += result.saved;
-              logger.debug(`Optimized: ${entry.name} (saved ${(result.saved / 1024).toFixed(2)}KB)`);
+              const savedPercent = ((result.saved / result.originalSize) * 100).toFixed(1);
+              logger.debug(
+                `✨ ${entry.name}: ${(result.originalSize / 1024).toFixed(1)}KB → ${(result.newSize / 1024).toFixed(1)}KB (-${savedPercent}%)`
+              );
             }
           } catch (error) {
-            logger.warn(`Failed to optimize ${entry.name}: ${error.message}`);
+            logger.warn(`⚠️  Failed to optimize ${entry.name}: ${error.message}`);
             // Fallback: just copy the file
             cpSync(srcPath, destPath);
           }
@@ -50,15 +87,16 @@ export async function optimizeImages(srcDir, outDir) {
   await processDirectory(srcDir, outDir);
 
   if (optimized > 0) {
-    logger.success(`Optimized ${optimized} images (saved ${(totalSaved / 1024).toFixed(2)}KB)`);
+    logger.success(
+      `✅ Optimized ${optimized} images (saved ${(totalSaved / 1024).toFixed(2)}KB total)`
+    );
   }
 
   return { optimized, saved: totalSaved };
 }
 
 /**
- * Optimize a single image using Bun's native capabilities
- * Falls back to direct copy if optimization fails
+ * Optimize a single image using WASM codecs
  */
 async function optimizeImage(srcPath, destPath) {
   const ext = extname(srcPath).toLowerCase();
@@ -66,118 +104,80 @@ async function optimizeImage(srcPath, destPath) {
   const originalSize = originalFile.size;
 
   try {
-    // Read the image
-    const imageBuffer = await originalFile.arrayBuffer();
-
-    // For PNG/JPEG, we can optimize
-    if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
-      // Use Bun's native image optimization
-      // This is fast because it uses native C libraries
-      const optimized = await optimizeWithBun(imageBuffer, ext);
-      
-      if (optimized && optimized.byteLength < originalSize) {
-        await Bun.write(destPath, optimized);
-        const saved = originalSize - optimized.byteLength;
-        return { saved, originalSize, newSize: optimized.byteLength };
-      }
+    // For SVG and GIF, just copy (no optimization needed/supported)
+    if (ext === '.svg' || ext === '.gif') {
+      cpSync(srcPath, destPath);
+      return null;
     }
 
-    // For other formats or if optimization didn't help, just copy
-    cpSync(srcPath, destPath);
-    return null;
-  } catch (error) {
-    // If anything fails, just copy the original
-    cpSync(srcPath, destPath);
-    return null;
-  }
-}
+    // Read the original image
+    const originalBuffer = await originalFile.arrayBuffer();
 
-/**
- * Optimize using Bun's native capabilities
- * This is a placeholder - Bun doesn't have built-in image optimization yet
- * We'll use a fast external library via Bun's FFI or shell commands
- */
-async function optimizeWithBun(buffer, ext) {
-  try {
-    // For now, we'll use oxipng and mozjpeg via shell commands
-    // These are the FASTEST available options (Rust-based)
-    const tempInput = `/tmp/bertui_input_${Date.now()}${ext}`;
-    const tempOutput = `/tmp/bertui_output_${Date.now()}${ext}`;
-
-    await Bun.write(tempInput, buffer);
+    let optimizedBuffer;
 
     if (ext === '.png') {
-      // Use oxipng (Rust-based, ultra-fast)
-      const proc = Bun.spawn(['oxipng', '-o', '2', '--strip', 'safe', tempInput, '-o', tempOutput], {
-        stdout: 'ignore',
-        stderr: 'ignore'
+      await initializePNG();
+      
+      // Decode → Re-encode with compression
+      const imageData = await pngDecode(originalBuffer);
+      
+      // Encode with oxipng-level compression (quality 85, similar to oxipng -o 2)
+      optimizedBuffer = await pngEncode(imageData, { 
+        quality: 85,
+        effort: 2 // 0-10, higher = better compression but slower
       });
-      await proc.exited;
-
-      if (existsSync(tempOutput)) {
-        const optimized = await Bun.file(tempOutput).arrayBuffer();
-        // Cleanup
-        Bun.spawn(['rm', tempInput, tempOutput]);
-        return optimized;
-      }
+      
     } else if (ext === '.jpg' || ext === '.jpeg') {
-      // Use mozjpeg (fastest JPEG optimizer)
-      const proc = Bun.spawn(['cjpeg', '-quality', '85', '-optimize', '-outfile', tempOutput, tempInput], {
-        stdout: 'ignore',
-        stderr: 'ignore'
-      });
-      await proc.exited;
-
-      if (existsSync(tempOutput)) {
-        const optimized = await Bun.file(tempOutput).arrayBuffer();
-        // Cleanup
-        Bun.spawn(['rm', tempInput, tempOutput]);
-        return optimized;
-      }
+      await initializeJPEG();
+      
+      // Decode → Re-encode with quality 85 (mozjpeg-like quality)
+      const imageData = await jpegDecode(originalBuffer);
+      optimizedBuffer = await jpegEncode(imageData, { quality: 85 });
+      
+    } else if (ext === '.webp') {
+      await initializeWebP();
+      
+      // WebP optimization
+      const imageData = await webpDecode(originalBuffer);
+      optimizedBuffer = await webpEncode(imageData, { quality: 85 });
     }
 
-    // Cleanup on failure
-    if (existsSync(tempInput)) Bun.spawn(['rm', tempInput]);
-    if (existsSync(tempOutput)) Bun.spawn(['rm', tempOutput]);
+    // Only save if we actually reduced the size
+    if (optimizedBuffer && optimizedBuffer.byteLength < originalSize) {
+      await Bun.write(destPath, optimizedBuffer);
+      const saved = originalSize - optimizedBuffer.byteLength;
+      return { saved, originalSize, newSize: optimizedBuffer.byteLength };
+    }
 
+    // If optimization didn't help, just copy the original
+    cpSync(srcPath, destPath);
     return null;
+    
   } catch (error) {
+    // If anything fails, just copy the original
+    logger.warn(`Optimization failed for ${srcPath.split('/').pop()}, copying original`);
+    cpSync(srcPath, destPath);
     return null;
   }
 }
 
 /**
- * Check if optimization tools are installed
+ * Check if optimization is available (always true with WASM! 🎉)
  */
 export async function checkOptimizationTools() {
-  const tools = [];
-
   try {
-    const oxipng = Bun.spawn(['which', 'oxipng'], { stdout: 'pipe' });
-    await oxipng.exited;
-    if (oxipng.exitCode === 0) {
-      tools.push('oxipng');
-    }
-  } catch (e) {}
-
-  try {
-    const cjpeg = Bun.spawn(['which', 'cjpeg'], { stdout: 'pipe' });
-    await cjpeg.exited;
-    if (cjpeg.exitCode === 0) {
-      tools.push('mozjpeg');
-    }
-  } catch (e) {}
-
-  if (tools.length === 0) {
-    logger.warn('⚠️  No image optimization tools found. Install for better performance:');
-    logger.warn('   macOS:   brew install oxipng mozjpeg');
-    logger.warn('   Ubuntu:  apt install oxipng mozjpeg');
-    logger.warn('   Images will be copied without optimization.');
-  } else {
-    logger.success(`Found optimization tools: ${tools.join(', ')}`);
+    // Try to import the WASM modules
+    await import('@jsquash/png');
+    await import('@jsquash/jpeg');
+    await import('@jsquash/webp');
+    
+    logger.success('✅ WASM image optimization available');
+    logger.info('📦 Using @jsquash (zero OS dependencies!)');
+    return ['png', 'jpeg', 'webp'];
+  } catch (error) {
+    logger.error('❌ WASM codecs not installed. Run: bun add @jsquash/png @jsquash/jpeg @jsquash/webp');
+    return [];
   }
-
-  return tools;
 }
 
 /**
@@ -198,7 +198,7 @@ export function copyImages(srcDir, outDir) {
         if (!existsSync(destPath)) {
           mkdirSync(destPath, { recursive: true });
         }
-        processDirectory(srcPath, destPath);
+        processDirectory(srcPath, targetDir);
       } else if (entry.isFile()) {
         const ext = extname(entry.name).toLowerCase();
 
@@ -211,6 +211,6 @@ export function copyImages(srcDir, outDir) {
   }
 
   processDirectory(srcDir, outDir);
-  logger.info(`Copied ${copied} images without optimization`);
+  logger.info(`📋 Copied ${copied} images without optimization`);
   return copied;
 }

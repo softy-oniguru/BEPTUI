@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync } from 'fs
 import logger from './logger/logger.js';
 import { buildCSS } from './build/css-builder.js';
 import { loadEnvVariables, replaceEnvInCode } from './utils/env.js';
+import { optimizeImages, checkOptimizationTools, copyImages } from './build/image-optimizer.js';
 
 export async function buildProduction(options = {}) {
   const root = options.root || process.cwd();
@@ -38,11 +39,20 @@ export async function buildProduction(options = {}) {
     logger.info('Step 2: Building CSS with Lightning CSS...');
     await buildAllCSS(root, outDir);
     
-    // ✅ FIX: Copy all static assets from src/ and public/
-    logger.info('Step 3: Copying static assets...');
-    await copyAllStaticAssets(root, outDir);
+    // ✅ NEW: Check if image optimization is available
+    logger.info('Step 3: Checking image optimization tools...');
+    const optimizationTools = await checkOptimizationTools();
     
-    logger.info('Step 4: Bundling JavaScript with Bun...');
+    logger.info('Step 4: Copying and optimizing static assets...');
+    if (optimizationTools.length > 0) {
+      // Use WASM-powered optimization
+      await copyAllStaticAssets(root, outDir, true);
+    } else {
+      // Fallback: just copy images
+      await copyAllStaticAssets(root, outDir, false);
+    }
+    
+    logger.info('Step 5: Bundling JavaScript with Bun...');
     const buildEntry = join(buildDir, 'main.js');
     
     if (!existsSync(buildEntry)) {
@@ -85,7 +95,7 @@ export async function buildProduction(options = {}) {
     
     logger.success('JavaScript bundled with tree-shaking');
     
-    logger.info('Step 5: Generating SEO-optimized HTML files...');
+    logger.info('Step 6: Generating SEO-optimized HTML files...');
     await generateProductionHTML(root, outDir, result, routes);
     
     rmSync(buildDir, { recursive: true });
@@ -121,76 +131,42 @@ export async function buildProduction(options = {}) {
   }
 }
 
-// ✅ NEW FUNCTION: Copy all static assets
-async function copyAllStaticAssets(root, outDir) {
+// ✅ UPDATED: Copy and optionally optimize static assets
+async function copyAllStaticAssets(root, outDir, optimize = true) {
   const publicDir = join(root, 'public');
   const srcDir = join(root, 'src');
   
   let assetsCopied = 0;
+  let assetsOptimized = 0;
   
   // Copy from public/
   if (existsSync(publicDir)) {
-    assetsCopied += await copyStaticAssetsFromDir(publicDir, outDir, 'public');
+    if (optimize) {
+      const result = await optimizeImages(publicDir, outDir);
+      assetsOptimized += result.optimized;
+    } else {
+      assetsCopied += copyImages(publicDir, outDir);
+    }
   }
   
   // Copy static assets from src/ (images, fonts, etc.)
   if (existsSync(srcDir)) {
     const assetsOutDir = join(outDir, 'assets');
     mkdirSync(assetsOutDir, { recursive: true });
-    assetsCopied += await copyStaticAssetsFromDir(srcDir, assetsOutDir, 'src', true);
-  }
-  
-  logger.success(`Copied ${assetsCopied} static assets`);
-}
-
-// ✅ NEW FUNCTION: Recursively copy static assets
-async function copyStaticAssetsFromDir(sourceDir, targetDir, label, skipStyles = false) {
-  const staticExtensions = [
-    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif', // Images
-    '.woff', '.woff2', '.ttf', '.otf', '.eot', // Fonts
-    '.mp4', '.webm', '.ogg', '.mp3', '.wav', // Media
-    '.pdf', '.zip', '.json', '.xml', '.txt' // Documents
-  ];
-  
-  let copiedCount = 0;
-  
-  function copyRecursive(dir, targetBase) {
-    const entries = readdirSync(dir, { withFileTypes: true });
     
-    for (const entry of entries) {
-      const srcPath = join(dir, entry.name);
-      const relativePath = relative(sourceDir, srcPath);
-      const destPath = join(targetBase, relativePath);
-      
-      if (entry.isDirectory()) {
-        // Skip node_modules, .bertui, etc.
-        if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
-          continue;
-        }
-        
-        // Skip styles directory if requested
-        if (skipStyles && entry.name === 'styles') {
-          continue;
-        }
-        
-        mkdirSync(destPath, { recursive: true });
-        copyRecursive(srcPath, targetBase);
-      } else if (entry.isFile()) {
-        const ext = extname(entry.name);
-        
-        // Copy static assets only
-        if (staticExtensions.includes(ext.toLowerCase())) {
-          mkdirSync(dirname(destPath), { recursive: true });
-          cpSync(srcPath, destPath);
-          logger.debug(`Copied ${label}/${relativePath}`);
-          copiedCount++;
-        }
-      }
+    if (optimize) {
+      const result = await optimizeImages(srcDir, assetsOutDir);
+      assetsOptimized += result.optimized;
+    } else {
+      assetsCopied += copyImages(srcDir, assetsOutDir);
     }
   }
   
-  copyRecursive(sourceDir, targetDir);
-  return copiedCount;
+  if (optimize && assetsOptimized > 0) {
+    logger.success(`🎨 Optimized ${assetsOptimized} images with WASM codecs`);
+  } else {
+    logger.success(`📋 Copied ${assetsCopied} static assets`);
+  }
 }
 
 async function buildAllCSS(root, outDir) {
@@ -447,7 +423,6 @@ async function compileBuildDirectory(srcDir, buildDir, root, envVars) {
         code = replaceEnvInCode(code, envVars);
         code = fixBuildImports(code, srcPath, outPath, root);
         
-        // ✅ FIX: Add React import if needed
         if (usesJSX(code) && !code.includes('import React')) {
           code = `import React from 'react';\n${code}`;
         }
@@ -486,7 +461,6 @@ async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
     
     let compiled = await transpiler.transform(code);
     
-    // ✅ FIX: Add React import if needed
     if (usesJSX(compiled) && !compiled.includes('import React')) {
       compiled = `import React from 'react';\n${compiled}`;
     }
