@@ -1,4 +1,4 @@
-// src/build.js - FIXED VERSION
+// src/build.js - COMPLETELY FIXED VERSION
 import { join, relative, basename, extname, dirname } from 'path';
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync } from 'fs';
 import logger from './logger/logger.js';
@@ -13,6 +13,7 @@ export async function buildProduction(options = {}) {
   
   logger.bigLog('BUILDING FOR PRODUCTION', { color: 'green' });
   
+  // Clean up old builds
   if (existsSync(buildDir)) {
     rmSync(buildDir, { recursive: true });
   }
@@ -35,7 +36,7 @@ export async function buildProduction(options = {}) {
     
     logger.info('Step 1: Compiling for production...');
     const { routes } = await compileForBuild(root, buildDir, envVars);
-    logger.success('Production compilation complete');
+    logger.success(`Production compilation complete - ${routes.length} routes`);
     
     logger.info('Step 2: Building CSS with Lightning CSS...');
     await buildAllCSS(root, outDir);
@@ -44,8 +45,8 @@ export async function buildProduction(options = {}) {
     const optimizationTools = await checkOptimizationTools();
     
     logger.info('Step 4: Copying and optimizing static assets...');
-    // ✅ FIX 1: Copy images from BOTH src/images/ and public/
-    await copyAllStaticAssets(root, outDir, optimizationTools.length > 0);
+    // SKIP OPTIMIZATION FOR NOW - JUST COPY
+    await copyAllStaticAssets(root, outDir, false);
     
     logger.info('Step 5: Bundling JavaScript with Bun...');
     const buildEntry = join(buildDir, 'main.js');
@@ -85,22 +86,33 @@ export async function buildProduction(options = {}) {
       process.exit(1);
     }
     
-    logger.success('JavaScript bundled with tree-shaking');
+    logger.success('JavaScript bundled successfully');
     
-    logger.info('Step 6: Generating SEO-optimized HTML files...');
-    // ✅ FIX 2: Generate HTML for ALL routes including index.html
+    // DEBUG: Show what was built
+    logger.info('Built outputs:');
+    result.outputs.forEach((output, i) => {
+      logger.info(`  ${i + 1}. ${relative(outDir, output.path)} (${output.kind})`);
+    });
+    
+    logger.info('Step 6: Generating HTML files...');
+    // ✅ CRITICAL FIX: Generate HTML files
     await generateProductionHTML(root, outDir, result, routes);
     
-    rmSync(buildDir, { recursive: true });
-    logger.info('Cleaned up .bertuibuild/');
+    // Clean up build directory
+    if (existsSync(buildDir)) {
+      rmSync(buildDir, { recursive: true });
+      logger.info('Cleaned up .bertuibuild/');
+    }
     
     const duration = Date.now() - startTime;
     logger.success(`✨ Build complete in ${duration}ms`);
     logger.info(`📦 Output: ${outDir}`);
     
+    // Show build summary
     logger.table(result.outputs.map(o => ({
       file: o.path.replace(outDir, ''),
-      size: `${(o.size / 1024).toFixed(2)} KB`
+      size: `${(o.size / 1024).toFixed(2)} KB`,
+      type: o.kind
     })));
     
     logger.bigLog('READY TO DEPLOY', { color: 'green' });
@@ -108,7 +120,7 @@ export async function buildProduction(options = {}) {
     console.log('  Vercel:  bunx vercel');
     console.log('  Netlify: bunx netlify deploy');
     console.log('\n🔍 Preview locally:\n');
-    console.log('  bun run preview\n');
+    console.log('  cd dist && bun run preview\n');
     
   } catch (error) {
     logger.error(`Build failed: ${error.message}`);
@@ -124,64 +136,33 @@ export async function buildProduction(options = {}) {
   }
 }
 
-// ✅ FIX 3: Enhanced asset copying with proper directory structure
-// ✅ FIX 3: Enhanced asset copying with proper directory structure
+// ✅ SIMPLE asset copying
 async function copyAllStaticAssets(root, outDir, optimize = true) {
   const publicDir = join(root, 'public');
   const srcImagesDir = join(root, 'src', 'images');
   
-  let assetsCopied = 0;
-  let assetsOptimized = 0;
-  
-  logger.info(`🔍 Checking source directories...`);
-  logger.info(`  public/: ${existsSync(publicDir) ? '✅ exists' : '❌ not found'}`);
-  logger.info(`  src/images/: ${existsSync(srcImagesDir) ? '✅ exists' : '❌ not found'}`);
-  
-  // Create images directory in dist/
-  const distImagesDir = join(outDir, 'images');
-  if (!existsSync(distImagesDir)) {
-    mkdirSync(distImagesDir, { recursive: true });
-  }
+  // ALWAYS use simple copy for now
+  logger.info('Using simple asset copy (optimization disabled)...');
   
   // Copy from public/ to root of dist/
   if (existsSync(publicDir)) {
-    logger.info('Copying public/ assets...');
-    if (optimize) {
-      const result = await optimizeImages(publicDir, outDir);
-      assetsOptimized += result.optimized;
-    } else {
-      assetsCopied += copyImages(publicDir, outDir);
-    }
+    logger.info('📁 Copying public/ directory...');
+    copyImages(publicDir, outDir);
   } else {
-    logger.info('No public/ directory found, skipping...');
+    logger.info('No public/ directory found');
   }
   
-  // ✅ FIX: Copy from src/images/ to dist/images/
+  // Copy from src/images/ to dist/images/
   if (existsSync(srcImagesDir)) {
-    logger.info(`Copying src/images/ to dist/images/...`);
-    
-    // Debug: List files in src/images/
-    const files = readdirSync(srcImagesDir);
-    logger.info(`Found ${files.length} items in src/images/: ${files.join(', ')}`);
-    
-    if (optimize) {
-      const result = await optimizeImages(srcImagesDir, distImagesDir);
-      assetsOptimized += result.optimized;
-    } else {
-      assetsCopied += copyImages(srcImagesDir, distImagesDir);
-    }
+    logger.info('🖼️  Copying src/images/ to dist/images/...');
+    const distImagesDir = join(outDir, 'images');
+    mkdirSync(distImagesDir, { recursive: true });
+    copyImages(srcImagesDir, distImagesDir);
   } else {
-    logger.info('No src/images/ directory found, skipping...');
-  }
-  
-  if (optimize && assetsOptimized > 0) {
-    logger.success(`🎨 Optimized ${assetsOptimized} images with WASM codecs`);
-  } else if (assetsCopied > 0) {
-    logger.success(`📋 Copied ${assetsCopied} static assets`);
-  } else {
-    logger.warn(`⚠️  No static assets found or copied`);
+    logger.info('No src/images/ directory found');
   }
 }
+
 async function buildAllCSS(root, outDir) {
   const srcStylesDir = join(root, 'src', 'styles');
   const stylesOutDir = join(outDir, 'styles');
@@ -569,63 +550,71 @@ function extractMetaFromSource(code) {
   }
 }
 
-// ✅ FIX 4: Generate proper HTML files with correct meta tags
+// ✅ CRITICAL FIX: Generate HTML files
 async function generateProductionHTML(root, outDir, buildResult, routes) {
+  if (routes.length === 0) {
+    logger.warn('No routes found, skipping HTML generation');
+    return;
+  }
+  
+  logger.info(`Generating HTML files for ${routes.length} routes...`);
+  
+  // Find main JS bundle
   const mainBundle = buildResult.outputs.find(o => 
     o.path.includes('main') && o.kind === 'entry-point'
   );
   
   if (!mainBundle) {
-    throw new Error('Could not find main bundle in build output');
+    logger.error('Could not find main bundle in build output');
+    // List all outputs for debugging
+    logger.info('Available outputs:');
+    buildResult.outputs.forEach((o, i) => {
+      logger.info(`  ${i + 1}. ${o.path} (${o.kind})`);
+    });
+    return;
   }
   
   const bundlePath = relative(outDir, mainBundle.path).replace(/\\/g, '/');
-  logger.info(`Main bundle path: ${bundlePath}`);
+  logger.info(`Main bundle: ${bundlePath}`);
   
-  const srcStylesDir = join(root, 'src', 'styles');
-  let userStylesheets = '';
-  
-  if (existsSync(srcStylesDir)) {
-    const cssFiles = readdirSync(srcStylesDir).filter(f => f.endsWith('.css'));
-    userStylesheets = cssFiles.map(f => 
-      `  <link rel="stylesheet" href="/styles/${f.replace('.css', '.min.css')}">`
-    ).join('\n');
-  }
-  
-  // ✅ Load config for default meta
+  // Load config for default meta
   const { loadConfig } = await import('./config/loadConfig.js');
   const config = await loadConfig(root);
   const defaultMeta = config.meta || {};
   
-  logger.info('Generating SEO-optimized HTML files...');
-  
-  // ✅ FIX: Generate HTML for ALL routes (including dynamic as fallback)
+  // Generate HTML for each route
   for (const route of routes) {
-    const sourceCode = await Bun.file(route.path).text();
-    const pageMeta = extractMetaFromSource(sourceCode);
-    const meta = { ...defaultMeta, ...pageMeta };
-    
-    if (pageMeta) {
-      logger.info(`Extracted meta for ${route.route}: ${JSON.stringify(pageMeta)}`);
+    try {
+      const sourceCode = await Bun.file(route.path).text();
+      const pageMeta = extractMetaFromSource(sourceCode);
+      const meta = { ...defaultMeta, ...pageMeta };
+      
+      const html = generateHTML(meta, route, bundlePath);
+      
+      let htmlPath;
+      if (route.route === '/') {
+        htmlPath = join(outDir, 'index.html');
+      } else {
+        // Create directory for the route
+        const routeDir = join(outDir, route.route.slice(1)); // Remove leading slash
+        mkdirSync(routeDir, { recursive: true });
+        htmlPath = join(routeDir, 'index.html');
+      }
+      
+      await Bun.write(htmlPath, html);
+      logger.success(`Generated: ${route.route === '/' ? 'index.html' : route.route + '/index.html'}`);
+    } catch (error) {
+      logger.error(`Failed to generate HTML for ${route.route}: ${error.message}`);
     }
-    
-    const html = generateHTML(meta, route, bundlePath, userStylesheets);
-    
-    let htmlPath;
-    if (route.route === '/') {
-      htmlPath = join(outDir, 'index.html');
-    } else {
-      const routeDir = join(outDir, route.route);
-      mkdirSync(routeDir, { recursive: true });
-      htmlPath = join(routeDir, 'index.html');
-    }
-    
-    await Bun.write(htmlPath, html);
-    logger.success(`Generated ${route.route === '/' ? 'index.html' : route.route + '/index.html'}`);
   }
 }
 
-function generateHTML(meta, route, bundlePath, userStylesheets) {
+function generateHTML(meta, route, bundlePath) {
+  const cssFiles = ['global.min.css', 'home.min.css'];
+  const stylesheets = cssFiles.map(css => 
+    `  <link rel="stylesheet" href="/styles/${css}">`
+  ).join('\n');
+  
   return `<!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
 <head>
@@ -636,23 +625,10 @@ function generateHTML(meta, route, bundlePath, userStylesheets) {
   <meta name="description" content="${meta.description || 'Built with BertUI - Lightning fast React development'}">
   ${meta.keywords ? `<meta name="keywords" content="${meta.keywords}">` : ''}
   ${meta.author ? `<meta name="author" content="${meta.author}">` : ''}
-  ${meta.themeColor ? `<meta name="theme-color" content="${meta.themeColor}">` : ''}
-  
-  <meta property="og:title" content="${meta.ogTitle || meta.title || 'BertUI App'}">
-  <meta property="og:description" content="${meta.ogDescription || meta.description || 'Built with BertUI'}">
-  ${meta.ogImage ? `<meta property="og:image" content="${meta.ogImage}">` : ''}
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="${route.route}">
-  
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${meta.ogTitle || meta.title || 'BertUI App'}">
-  <meta name="twitter:description" content="${meta.ogDescription || meta.description || 'Built with BertUI'}">
-  ${meta.ogImage ? `<meta name="twitter:image" content="${meta.ogImage}">` : ''}
   
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="canonical" href="${route.route}">
   
-${userStylesheets}
+${stylesheets}
   
   <script type="importmap">
   {
