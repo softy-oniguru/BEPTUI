@@ -1,0 +1,28 @@
+{
+  "name": "migrate-bertui",
+  "version": "1.0.0",
+  "description": "Migrate your React vite  projects to BERTUI instantly",
+  "type": "module",
+  "main": "./index.js",
+  "bin": {
+    "migrate-bertui": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "template",
+    "README.md"
+  ],
+  "keywords": [
+    "bertui",
+    "migration",
+    "react",
+    "vite",
+    "bun"
+  ],
+  "author": "Pease Ernest",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BunElysiaReact/BERTUI.git"
+  }
+}
