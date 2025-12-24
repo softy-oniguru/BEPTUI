@@ -1,3 +1,4 @@
+// src/pages/about.jsx
 import { Link } from 'bertui/router';
 import '../styles/about.css';
 
@@ -16,28 +17,22 @@ export default function About() {
       </p>
       
       <div className="about-features">
-        <h2 className="about-features-title">Why BertUI?</h2>
+        <h2>Why BertUI?</h2>
         
         <div className="features-grid">
           <div className="feature-item">
-            <h3 className="feature-item-title feature-speed">⚡ Speed</h3>
-            <p className="feature-item-text">
-              Leverages Bun's native performance for faster builds and hot reloads.
-            </p>
+            <h3>⚡ Speed</h3>
+            <p>Leverages Bun's native performance for faster builds and hot reloads.</p>
           </div>
           
           <div className="feature-item">
-            <h3 className="feature-item-title feature-simplicity">🎯 Simplicity</h3>
-            <p className="feature-item-text">
-              File-based routing means no complex configuration - just create files and go.
-            </p>
+            <h3>🎯 Simplicity</h3>
+            <p>File-based routing means no complex configuration - just create files and go.</p>
           </div>
           
           <div className="feature-item">
-            <h3 className="feature-item-title feature-power">💪 Power</h3>
-            <p className="feature-item-text">
-              Code splitting and modern tooling out of the box.
-            </p>
+            <h3>💪 Power</h3>
+            <p>Code splitting and modern tooling out of the box.</p>
           </div>
         </div>
       </div>

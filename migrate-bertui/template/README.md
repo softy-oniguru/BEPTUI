@@ -1,222 +1,251 @@
-# BertUI ⚡
+# BertUI Template ⚡
 
-[![Stable: v1.0.0](https://img.shields.io/badge/Stable-v1.0.0-brightgreen)](https://github.com/your-repo)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+**Bun + Elysia + React + Template + User Interface**
 
-## 🚀 Production Ready (v1.0.3+)
-
-BertUI is now **battle-tested in production** with:
-- ✅ Single CSS file optimization (combined from all source CSS)
-- ✅ Vercel deployment verified
-- ✅ 38ms compilation speed maintained
-- ✅ Zero-config static site generation
-
-**Live Demo:** https://bertui-docswebsite.vercel.app/
-**The fastest, zero-config React static site generator. Now stable and production-ready.**
-Lightning-fast React development powered by Bun.
-## 📝 Limitations & Notes
-
-### Image Handling
-BertUI automatically serves and copies images from two specific directories:
-- `src/images/` → Available at `/images/*` in development and copied to `dist/images/` in production
-- `public/` → Available at `/*` and copied to `dist/` root
-
-**Important:** Images referenced in your JSX/TSX that are located outside these directories (e.g., `../assets/` or absolute paths) will cause compilation errors. Always place project images in `src/images/` or `public/`.
-
-## ⚠️ Important Notice - CSS Animations Temporarily Unavailable
-
-**The built-in CSS animation utilities have been temporarily removed** due to compatibility issues with `bun.build`. We're working on a solution and they will be back in an upcoming release.
-
-**What this means:**
-- The 15+ animation classes (`.fadein`, `.scalein`, `.bouncein`, etc.) are not currently available
-- You can still use your own CSS animations or external libraries
-- All other BertUI features work normally
-
-**We apologize for any inconvenience caused.** This feature will return soon! 🚀
+This is the official BertUI starter template. Everything you need to build fast React apps.
 
 ---
 
-## Features
+## 🚀 What is BertUI?
 
-- ⚡ **Blazing Fast** - Built on Bun
-- 📁 **File-Based Routing** - Zero config routing
-- 🔥 **Hot Module Replacement** - Instant updates
-- 📦 **Zero Config** - Works out of the box
-- 🚀 **Production Ready** - Optimized builds
+**B**un - Fastest JavaScript runtime  
+**E**lysia - Lightning web framework  
+**R**eact - The UI library (98% of BertUI!)  
+**T**emplate - This starter  
+**UI** - User Interface components  
 
-## Quick Start
+BertUI is a React framework built for speed. If you know React, you already know BertUI.
 
-### Create New App (Recommended)
+**New to React?** Learn it first: [react.dev/learn](https://react.dev/learn)
+
+---
+
+## ⚡ Quick Start
+
 ```bash
 bunx create-bertui my-app
 cd my-app
 bun run dev
 ```
 
-This creates a complete BertUI project with:
-- Pre-configured file structure
-- Sample pages with routing
-- Beautiful example components
-- All dependencies installed
+Open `http://localhost:3000` and you're ready!
 
-### Manual Installation (Advanced)
-If you want to configure everything yourself:
-```bash
-bun add bertui react react-dom
+---
+
+## 📁 Template Structure
+
+```
+my-app/
+├── src/
+│   ├── pages/
+│   │   ├── index.jsx          # Home page (/)
+│   │   ├── about.jsx          # About (/about)
+│   │   └── blog/
+│   │       ├── index.jsx      # Blog list (/blog)
+│   │       └── [slug].jsx     # Blog post (/blog/:slug)
+│   ├── styles/
+│   │   ├── global.css         # Global styles
+│   │   ├── home.css
+│   │   ├── about.css
+│   │   └── blog.css
+│   ├── images/                # Your images
+│   └── main.jsx
+├── public/
+│   └── favicon.svg
+└── package.json
 ```
 
-Then you'll need to manually set up:
-- Project structure (`src/pages/`, `src/main.jsx`, etc.)
-- Router configuration
-- Build configuration
+---
 
-**Note:** We recommend using `bunx create-bertui` for the best experience!
+## 🎯 Key Features
 
-## Commands
-```bash
-bertui dev         # Start dev server
-bertui build       # Build for production
-```
+### File-Based Routing
+Create `src/pages/contact.jsx` → automatically get `/contact` route
 
-## File-Based Routing
+### Dynamic Routes
+Create `src/pages/user/[id].jsx` → matches `/user/123`, `/user/abc`, etc.
 
-BertUI now has **complete file-based routing**! Here's what's included:
-
-### 📁 Features
-
-#### ✅ File-Based Routing
-```
-src/pages/index.jsx       → /
-src/pages/about.jsx       → /about
-src/pages/blog/index.jsx  → /blog
-```
-
-#### ✅ Dynamic Routes
-```
-src/pages/user/[id].jsx           → /user/:id
-src/pages/blog/[slug].jsx         → /blog/:slug
-src/pages/shop/[cat]/[prod].jsx   → /shop/:cat/:prod
-```
-
-#### ✅ Navigation Components
 ```jsx
-import { Link, navigate } from 'bertui/router';
-
-// Link component
-<Link to="/about">About</Link>
-
-// Programmatic navigation
-const { navigate } = useRouter();
-navigate('/dashboard');
-```
-
-#### ✅ Route Parameters
-```jsx
-export default function UserProfile({ params }) {
-  return <div>User ID: {params.id}</div>;
+export default function User({ params }) {
+  return <h1>User: {params.id}</h1>;
 }
 ```
 
-#### ✅ Backward Compatible
-- Still works with `src/main.jsx` if no `pages/` directory
-- Automatically detects routing mode
-- No breaking changes!
-
-## 📊 How It Works
-
-1. **Developer creates pages:**
-   ```bash
-   src/pages/
-   ├── index.jsx
-   ├── about.jsx
-   └── user/[id].jsx
-   ```
-
-2. **BertUI scans and generates routes:**
-   ```javascript
-   [
-     { path: '/', file: 'index.jsx' },
-     { path: '/about', file: 'about.jsx' },
-     { path: '/user/:id', file: 'user/[id].jsx', isDynamic: true }
-   ]
-   ```
-
-3. **Router code is auto-generated:**
-   - Creates `.bertui/router.js`
-   - Imports all page components
-   - Provides routing logic
-
-4. **Dev server serves SPA:**
-   - All routes serve the same HTML
-   - Client-side routing handles navigation
-   - HMR updates routes on file changes
-
-## 🎓 Usage Example
+### Server Islands (NEW in v1.1.0!)
+Add one line for perfect SEO:
 
 ```jsx
-// src/pages/index.jsx
-import { Link } from 'bertui/router';
+export const render = "server";
 
-export default function Home() {
-  return (
-    <div>
-      <h1>Welcome to My App!</h1>
-      <nav>
-        <Link to="/about">About</Link>
-        <Link to="/blog">Blog</Link>
-        <Link to="/user/123">My Profile</Link>
-      </nav>
-    </div>
-  );
-}
+export const meta = {
+  title: "My Page",
+  description: "SEO description"
+};
 
-// src/pages/user/[id].jsx
-export default function UserProfile({ params }) {
-  return (
-    <div>
-      <h1>User {params.id}</h1>
-      <p>Profile page for user {params.id}</p>
-    </div>
-  );
+export default function MyPage() {
+  return <h1>Pre-rendered HTML!</h1>;
 }
 ```
 
-## 📈 Performance
+Learn more: [bertui-docswebsite.vercel.app/server-islands](https://bertui-docswebsite.vercel.app/server-islands)
 
-- **Fast compilation:** Bun's speed + code splitting
-- **Small bundles:** Each route is a separate chunk
-- **Quick HMR:** Only recompiles changed files
-- **Smart routing:** Static routes matched first
+---
 
-## 🐛 Error Handling
+## 🎨 Styling
 
-- Missing routes → Auto 404 page
-- Invalid pages → Compilation error with details
-- Runtime errors → Preserved in dev mode
+This template uses CSS files. Simple and fast.
 
-## 🎯 Next Steps
+### Global Styles
+Edit `src/styles/global.css` for site-wide styles.
 
-### Recommended Enhancements:
-1. **Layouts** - Wrap pages with shared layouts
-2. **Middleware** - Auth, logging, etc.
-3. **Data Loading** - Fetch data before rendering
-4. **API Routes** - Backend API in `pages/api/`
-5. **Static Generation** - Pre-render at build time
+### Page Styles
+Each page has its own CSS:
+- `home.css` for home page
+- `about.css` for about page
+- `blog.css` for blog
+
+### Add Your Own
+```jsx
+import '../styles/my-page.css';
+```
+
+---
+
+## 🖼️ Images
+
+**Two locations only:**
+
+1. `src/images/` - Component images
+```jsx
+import Logo from '../images/logo.png';
+<img src={Logo} alt="Logo" />
+```
+
+2. `public/` - Static assets
+```jsx
+<img src="/favicon.svg" alt="Icon" />
+```
+
+**Don't use other folders!** They break builds.
+
+---
+
+## 🏗️ Build & Deploy
 
 ### Production Build
-Update `build.js` to:
-- Generate static HTML for each route
-- Create optimized bundles per route
-- Handle dynamic routes appropriately
+```bash
+bun run build
+```
 
-## 🏁 Conclusion
+Creates optimized `dist/` folder.
 
-BertUI now has **production-ready file-based routing** that's:
-- ⚡ **Fast** - Built on Bun
-- 🎯 **Simple** - Zero config
-- 💪 **Powerful** - Dynamic routes, params, navigation
-- 🔥 **Modern** - HMR, code splitting, SPA
+### Deploy to Vercel
+```bash
+vercel
+```
 
-## License
+Or push to GitHub and import to Vercel. Auto-detects BertUI!
 
-MIT
+---
+
+## 🎓 Learning Resources
+
+- **BertUI Docs:** [bertui-docswebsite.vercel.app](https://bertui-docswebsite.vercel.app/)
+- **Server Islands:** [bertui-docswebsite.vercel.app/server-islands](https://bertui-docswebsite.vercel.app/server-islands)
+- **React Docs:** [react.dev/learn](https://react.dev/learn)
+
+---
+
+## 💬 Community & Support
+
+- **GitHub:** [github.com/BunElysiaReact/BERTUI](https://github.com/BunElysiaReact/BERTUI)
+- **Discord:** [discord.gg/kvbXfkJG](https://discord.gg/kvbXfkJG)
+- **Issues:** [github.com/BunElysiaReact/BERTUI/issues](https://github.com/BunElysiaReact/BERTUI/issues)
+
+**Please leave an honest review!** This library is my passion project. If you like it, star the repo and recommend it to others.
+
+---
+
+## 🚧 Coming Soon
+
+**Plugins are in development!** 
+
+We're building:
+- Icons plugin (best in the world!)
+- More tooling
+- Cool integrations
+
+Stay tuned. We're building something amazing.
+
+---
+
+## 📊 Why BertUI?
+
+**494ms** dev server startup  
+**265ms** production builds  
+**100KB** bundle size  
+**30ms** HMR updates  
+
+Not just claims - proven benchmarks: [See PERFORMANCE.md](https://github.com/BunElysiaReact/BERTUI/blob/main/PERFORMANCE.md)
+
+---
+
+## 📝 Template Tips
+
+### Remove What You Don't Need
+Don't need the blog? Delete `src/pages/blog/` and done.
+
+### Use Link for Navigation
+```jsx
+import { Link } from 'bertui/router';
+<Link to="/about">About</Link>  // ✅ Fast client-side
+<a href="/about">About</a>       // ❌ Full page reload
+```
+
+### Keep It Simple
+This template is intentionally simple. Add complexity only when you need it.
+
+---
+
+## ⚡ Performance
+
+BertUI is **fast** by default:
+- Bun runtime speed
+- Automatic code splitting
+- Optimized builds
+- Minimal bundle size
+
+You write code. We handle speed.
+
+---
+
+## 📄 License
+
+MIT License - Use it however you want!
+
+---
+
+## 🙏 Credits
+
+**Created by Pease Ernest**
+
+This is my own library. I invested real time building it. If BertUI helps you, please:
+- ⭐ Star the repo
+- 📝 Leave a review
+- 🗣️ Tell others about it
+
+We're unpopular now, but with your help, we can grow!
+
+---
+
+## 🎯 Remember
+
+**BertUI is 98% React.** If you know React, you know BertUI.
+
+**New to React?** Learn at [react.dev/learn](https://react.dev/learn) first.
+
+**Ready to build?** Start coding in `src/pages/` and watch the magic happen!
+
+---
+
+**Built with ⚡ and passion**
