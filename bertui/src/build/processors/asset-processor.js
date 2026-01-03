@@ -1,6 +1,6 @@
 // bertui/src/build/processors/asset-processor.js
 import { join } from 'path';
-
+import { existsSync, mkdirSync } from 'fs'; // ✅ ADD THIS IMPORT
 import { copyImages } from '../image-optimizer.js';
 
 export async function copyAllStaticAssets(root, outDir) {

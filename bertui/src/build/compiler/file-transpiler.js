@@ -1,45 +1,34 @@
-// bertui/src/build/compiler/file-transpiler.js
+// bertui/src/build/compiler/file-transpiler.js - SINGLE TRANSPILER INSTANCE
 import { join, relative, dirname, extname } from 'path';
 import { readdirSync, statSync, mkdirSync } from 'fs';
 import logger from '../../logger/logger.js';
 import { replaceEnvInCode } from '../../utils/env.js';
 
-// Global transpiler instances
-let jsxTranspiler = null;
-let tsxTranspiler = null;
-let tsTranspiler = null;
+// ✅ CRITICAL FIX: Create transpilers ONCE at module level
+const jsxTranspiler = new Bun.Transpiler({ loader: 'jsx' });
+
+const tsxTranspiler = new Bun.Transpiler({ 
+  loader: 'tsx',
+  tsconfig: {
+    compilerOptions: {
+      jsx: 'react',
+      jsxFactory: 'React.createElement',
+      jsxFragmentFactory: 'React.Fragment'
+    }
+  }
+});
+
+const tsTranspiler = new Bun.Transpiler({ 
+  loader: 'ts',
+  tsconfig: {
+    compilerOptions: {
+      jsx: 'preserve'
+    }
+  }
+});
 
 function getTranspiler(loader) {
-  if (loader === 'tsx' && !tsxTranspiler) {
-    tsxTranspiler = new Bun.Transpiler({ 
-      loader: 'tsx',
-      tsconfig: {
-        compilerOptions: {
-          jsx: 'react',
-          jsxFactory: 'React.createElement',
-          jsxFragmentFactory: 'React.Fragment'
-        }
-      }
-    });
-  }
-  
-  if (loader === 'ts' && !tsTranspiler) {
-    tsTranspiler = new Bun.Transpiler({ 
-      loader: 'ts',
-      tsconfig: {
-        compilerOptions: {
-          jsx: 'preserve'
-        }
-      }
-    });
-  }
-  
-  if (loader === 'jsx' && !jsxTranspiler) {
-    jsxTranspiler = new Bun.Transpiler({ 
-      loader: 'jsx'
-    });
-  }
-  
+  // Just return the pre-created instances
   return loader === 'tsx' ? tsxTranspiler : 
          loader === 'ts' ? tsTranspiler : 
          jsxTranspiler;
@@ -47,7 +36,7 @@ function getTranspiler(loader) {
 
 export async function compileBuildDirectory(srcDir, buildDir, root, envVars) {
   const files = readdirSync(srcDir);
-  const promises = [];
+  const filesToCompile = [];
   
   for (const file of files) {
     const srcPath = join(srcDir, file);
@@ -62,19 +51,41 @@ export async function compileBuildDirectory(srcDir, buildDir, root, envVars) {
       if (ext === '.css') continue;
       
       if (['.jsx', '.tsx', '.ts'].includes(ext)) {
-        promises.push(() => compileBuildFile(srcPath, buildDir, file, root, envVars));
+        filesToCompile.push({ path: srcPath, dir: buildDir, name: file, type: 'tsx' });
       } else if (ext === '.js') {
-        promises.push(() => compileJSFile(srcPath, buildDir, file, root, envVars));
+        filesToCompile.push({ path: srcPath, dir: buildDir, name: file, type: 'js' });
       }
     }
   }
   
-  // Process in batches to avoid Bun crashes
-  const BATCH_SIZE = 5;
-  for (let i = 0; i < promises.length; i += BATCH_SIZE) {
-    const batch = promises.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(fn => fn()));
+  if (filesToCompile.length === 0) return;
+  
+  // ✅ Process sequentially with progress
+  logger.info(`📦 Compiling ${filesToCompile.length} files sequentially...`);
+  
+  for (let i = 0; i < filesToCompile.length; i++) {
+    const file = filesToCompile[i];
+    
+    try {
+      if (file.type === 'tsx') {
+        await compileBuildFile(file.path, file.dir, file.name, root, envVars);
+      } else {
+        await compileJSFile(file.path, file.dir, file.name, root, envVars);
+      }
+      
+      // Progress every 10 files
+      if ((i + 1) % 10 === 0 || i === filesToCompile.length - 1) {
+        const percent = (((i + 1) / filesToCompile.length) * 100).toFixed(0);
+        logger.info(`   Progress: ${i + 1}/${filesToCompile.length} (${percent}%)`);
+      }
+      
+    } catch (error) {
+      logger.error(`Failed to compile ${file.name}: ${error.message}`);
+      // Continue with other files
+    }
   }
+  
+  logger.success(`✅ Compiled ${filesToCompile.length} files`);
 }
 
 async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
@@ -90,6 +101,7 @@ async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
     const outPath = join(buildDir, outFilename);
     code = fixBuildImports(code, srcPath, outPath, root);
     
+    // ✅ Reuse the same transpiler instance
     const transpiler = getTranspiler(loader);
     let compiled = await transpiler.transform(code);
     
@@ -99,6 +111,11 @@ async function compileBuildFile(srcPath, buildDir, filename, root, envVars) {
     
     compiled = fixRelativeImports(compiled);
     await Bun.write(outPath, compiled);
+    
+    // Help GC
+    code = null;
+    compiled = null;
+    
   } catch (error) {
     logger.error(`Failed to compile ${filename}: ${error.message}`);
     throw error;
@@ -117,6 +134,7 @@ async function compileJSFile(srcPath, buildDir, filename, root, envVars) {
   }
   
   await Bun.write(outPath, code);
+  code = null;
 }
 
 function usesJSX(code) {
