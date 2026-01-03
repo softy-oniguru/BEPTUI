@@ -1,143 +1,173 @@
 # BertUI Changelog
-# Changelog
-## 1.0.2 we will make all minified css to 1 universal css file and am done 
-## 1.0.1 - Production Build Fix (2025-12-17)
 
-### 🐛 Critical Bug Fixes
-- **Fixed Production HTML Generation:** CSS files are now properly linked in all generated HTML files
-- **Fixed Build Reliability:** Production builds now correctly include all stylesheets
-- **Improved Error Handling:** Better logging and error messages during build process
+## [1.1.1] - 2026-01-03
 
-### ✅ What Works Now
+### 🗺️ SEO Automation & TypeScript Support
+**Complete production toolkit with automatic SEO and full TypeScript support**
+
+#### ✨ New Features
+- **Smart Sitemap Generation:** Automatic `sitemap.xml` generation from discovered routes
+  - Extracts meta tags from page files for accurate descriptions
+  - Intelligent priority calculation (homepage = 1.0, nested pages = 0.6-0.8)
+  - Supports only static routes (dynamic routes excluded from sitemap)
+  - Standards-compliant XML format with changefreq and lastmod
+
+- **Configurable robots.txt:** Automated robots.txt creation with custom rules
+  - Custom disallow paths for admin, API, or private pages
+  - Crawl delay configuration for search engine rate limiting
+  - Automatic sitemap reference inclusion
+  - Simple configuration via `bertui.config.js`
+
+- **Full TypeScript Support:** `.tsx` and `.ts` files now fully supported
+  - Complete type definitions for BertUI API
+  - Config type safety with IntelliSense
+  - Router and component type safety
+  - Gradual adoption - mix `.jsx` and `.tsx` in same project
+  - Build system automatically handles TypeScript compilation
+
+#### 🔧 Technical Improvements
+- **Config System Upgrade:** Fixed config merging to preserve all user settings
+- **Build Pipeline Integration:** Added sitemap and robots.txt generation steps
+- **TypeScript Compilation:** Bun's native TypeScript support fully integrated
+- **Better Error Handling:** Clear error messages for missing configuration
+
+#### 📝 Configuration Example
+```javascript
+// bertui.config.js - Now with TypeScript autocomplete!
+export default {
+  siteName: "My Site",
+  baseUrl: "https://example.com", // Required for sitemap
+  
+  robots: {
+    disallow: ["/admin", "/api", "/dashboard"],
+    crawlDelay: 1 // 1 second delay between requests
+  }
+};
+```
+
+#### 🚀 TypeScript Example
+```typescript
+// src/pages/blog/[slug].tsx - Full TypeScript support!
+import { useRouter } from 'bertui/router';
+
+interface BlogParams {
+  slug: string;
+}
+
+export default function BlogPost() {
+  const { params } = useRouter<BlogParams>();
+  return <h1>Post: {params.slug}</h1>;
+}
+```
+
+### 🎯 What This Enables
+- ✅ **Zero-config SEO:** Sitemap and robots.txt generated automatically
+- ✅ **Type Safety:** Full TypeScript support for production applications
+- ✅ **Search Engine Optimization:** Proper indexing for all static pages
+- ✅ **Production Readiness:** Complete toolkit for serious projects
+- ✅ **Fast Builds:** All features with minimal build overhead (~116ms total)
+
+---
+
+## [1.1.0] - 2025-12-20
+
+### 🏝️ Server Islands: Hybrid Architecture
+
+#### ✨ Game-Changing Feature
+- **Server Islands:** Optional static generation with `export const render = "server"`
+- **Static HTML Extraction:** Build-time HTML generation for perfect SEO
+- **Per-Page Control:** Mix server-rendered and client-only pages
+- **Zero JavaScript Pages:** Static content pages with no client-side JS
+
+#### 🔧 Technical Details
+- Automatic detection of Server Island pages
+- Static HTML extraction at build time
+- Validation against React hooks and interactive features
+- Fallback to client-only rendering when needed
+
+---
+
+## [1.0.2] - 2025-12-18
+
+### 🎨 CSS Consolidation
+- **Single CSS File:** All styles now combined into one `bertui.min.css` file
+- **Simplified Asset Pipeline:** Single CSS reference in all HTML files
+- **Performance:** Reduced HTTP requests for better loading performance
+
+#### 📝 Note
+Multiple CSS file support will return in a future release with enhanced bundling.
+
+---
+
+## [1.0.1] - 2025-12-17
+
+### 🐛 Production Build Fix
+
+#### Critical Bug Fixes
+- **Fixed Production HTML Generation:** CSS files now properly linked in all generated HTML
+- **Fixed Build Reliability:** Production builds correctly include all stylesheets
+- **Improved Error Handling:** Better logging and error messages during build
+
+#### ✅ What Works Now
 - ✅ All CSS files from `dist/styles/` are linked in every HTML page
 - ✅ Production builds work locally and on Vercel/Netlify
 - ✅ No more "Flash of Unstyled Content" (FOUC)
 - ✅ Stable v1.0.0 foundation with this critical patch
 
-### 🔧 Technical Details
-- Fixed `generateProductionHTML` function to read CSS from correct location
-- Ensured all `.min.css` files are included in every page
-- Improved build logging for debugging
-## 1.0.0 - "Foundation" (2025-12-17)
+---
 
-### 🏁 The Beta Journey Culminates
-This release marks BertUI's transition from **public beta to stable production-ready software**. The previous 35 beta versions (v0.1.0 through v0.4.6) represented an intense, user-driven sprint to harden every core feature. That phase is now complete.
+## [1.0.0] - 2025-12-17
+
+### 🏁 The Stable Foundation
+
+#### From Beta to Production
+This release marks BertUI's transition from **public beta to stable production-ready software**. The previous 35 beta versions (v0.1.0 through v0.4.6) represented an intense, user-driven sprint to harden every core feature.
 
 With v1.0.0, BertUI commits to Semantic Versioning. The core API is stable, and future changes will be carefully managed for compatibility.
 
-### ✨ What's New & Stable
-All the speed, zero-config philosophy, and features from the beta are now solidified:
-
-*   **Blazing Performance:** Compilation in milliseconds, HMR updates under 50ms, and a dev server start under 100ms.
-*   **Zero-Config React:** Full JSX/TSX support with automatic React injection. Just write components.
-*   **File-Based Routing:** Intuitive routing via the `src/pages/` directory.
-*   **Complete Static Site Generation:** Production builds create optimized, SEO-ready static HTML for every route.
-*   **Robust Asset Pipeline:** Reliable copying of images from `src/images/` and `public/`.
-*   **Built-in CSS Pipeline:** Global and component-scoped CSS with LightningCSS minification.
-*   **Professional DX:** Full-screen error overlay, environment variable support, and clear logging.
-
-### ✅ Resolved from Beta
-The critical issues reported during the beta are now closed:
-*   Fixed automatic React import injection.
-*   Fixed static asset copying for production builds.
-*   Fixed HTML file generation for all routes.
-*   Added comprehensive error overlay.
-
-### 🚀 Getting Started
-New users should start here. The foundational API is stable for production use.
-
-**Previous Beta Versions:** The changelog for the rapid iteration phase (v0.1.0 - v0.4.6) is preserved below for transparency.
-<hr>
-
-## 0.4.7 (Latest Beta) - Build System Overhaul
-### ✨ New Features
-- **Complete Production Build:** Full static site generation with SEO-optimized HTML for all routes
-- **Multi-Route HTML Generation:** Automatic HTML file creation for discovered routes with proper meta tags
-- **Reliable Asset Pipeline:** Robust static file copying from both `/src/images/` and `/public/` directories
-- **Build Logging:** Enhanced build progress and debugging information
-
-### 🐛 Bug Fixes
-- Fixed production build hanging on WASM image optimization
-- Resolved missing HTML file generation in dist folder
-- Fixed recursive directory structure for production builds
-- Improved build reliability and error handling
-- Fixed asset copying for nested image directories
-
-### 🔧 Internal Improvements
-- Simplified image optimization (switched to reliable file copying)
-- Enhanced build configuration with better defaults
-- Improved error reporting during compilation
-
-## 0.4.5 - Asset Pipeline Fix
-### 🐛 Bug Fixes
-- **Critical Fix:** Static assets now correctly copy to dist folder during build
-- Fixed recursive directory copying for images and other assets
-- Improved logging for asset copying process
-- Resolved empty `dist/images/` directory issue
-
-## 0.4.2 - Developer Experience
-### ✨ New Features
-- **Error Overlay:** Full-screen error overlay for compilation and runtime errors
-- **Better Stack Traces:** Improved error message formatting and file references
-- **Enhanced HMR:** More reliable hot module replacement with visual feedback
-
-## 0.4.0 - Core Stability
-### 🐛 Bug Fixes
-- **Critical Fix:** Automatic React import injection now works correctly
-- Fixed JSX transpilation without manual React imports
-- Restored "Zero Config" promise for React development
-- Resolved `ReferenceError: React is not defined` errors
-
-## 0.3.9
-### ✨ New Features
-- **CSS Import Support:** Templates now properly support external CSS imports
-- **External Library Support:** Full support for importing external libraries (loggers, utilities, etc.)
-- **Environment Variables:** Complete `.env` file support with `BERTUI_` and `PUBLIC_` prefixes
-- **Build Improvements:** Enhanced production build process with better optimization
-
-### 🐛 Bug Fixes
-- Fixed CSS import handling in compilation process
-- Resolved CSS file serving in dev server
-- Fixed environment variable injection
-- Improved error handling across the board
-
-### 📝 Notes
-Versions 0.1.5 - 0.3.8 involved numerous bug fixes and stability improvements as we worked through:
-- CSS compilation edge cases
-- Router import resolution
-- Build process optimization
-- Dev server stability
-- HMR reliability
-
-## 0.1.4
-Attempted fix for router compilation errors. Fixed in later versions.
-
-## 0.1.3
-Fixed export 'Link' not found error in router.js
-
-## 0.1.2
-Fixed missing client-exports.js module error
-
-## 0.1.1 (2025-12-10) 🗺️ - Page Routing Implemented
-### ✨ New Features
-* **Integrated Page Routing:** Full support for client-side routing with React Router DOM
-* **Dynamic Asset Serving:** Dev server handles deep links and dynamic paths
-
-### 🐛 Bug Fixes & Improvements
-- Added file-based routing support
-
-## 0.1.0 (2025-12-10) 🚀 - Initial Release (Static)
-### ✨ New Features
-* **Zero-Configuration Tooling:** Native JSX/TSX support via Bun
-* **Integrated Development Server:** HMR via WebSockets
-* **Optimized Production Build:** Static builds with PostCSS optimization
-* **Built-in Animation Utilities:** CSS animation classes (temporarily unavailable in current version)
-
-### 📦 Installation & Setup
-* **`create-bertui`:** Use `bunx create-bertui <app-name>` for instant setup
+#### ✨ What's Stable
+- **Blazing Performance:** Compilation in milliseconds, HMR updates under 50ms
+- **Zero-Config React:** Full JSX support with automatic React injection
+- **File-Based Routing:** Intuitive routing via `src/pages/` directory
+- **Complete Static Site Generation:** SEO-ready static HTML for every route
+- **Robust Asset Pipeline:** Reliable image and static file handling
+- **Built-in CSS Pipeline:** Global CSS with LightningCSS minification
+- **Professional DX:** Error overlay, env vars, and clear logging
 
 ---
 
-**Note:** Version 0.4.7 represents a significant milestone where all critical bugs from the beta phase have been resolved. The framework is now stable and production-ready for static site generation with React.
+## Beta History (v0.1.0 - v0.4.7)
 
-**Status:** Beta - Ready for production use
+<details>
+<summary>View Beta Phase Development</summary>
+
+### [0.4.7] - Build System Overhaul
+- Complete production build system
+- Multi-route HTML generation
+- Reliable asset pipeline
+
+### [0.4.5] - Asset Pipeline Fix
+- Fixed static asset copying to dist folder
+- Improved recursive directory handling
+
+### [0.4.2] - Developer Experience
+- Full-screen error overlay
+- Better stack traces and formatting
+
+### [0.4.0] - Core Stability
+- Fixed automatic React import injection
+- Restored "Zero Config" promise
+
+### [0.3.9] - External Support
+- CSS import support
+- External library compatibility
+- Environment variable system
+
+### [0.1.1] - Page Routing
+- Integrated client-side routing
+- Dynamic asset serving
+
+### [0.1.0] - Initial Release
+- Zero-configuration tooling
+- Integrated dev server with HMR
+- Optimized production builds

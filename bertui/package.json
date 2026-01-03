@@ -1,21 +1,33 @@
 {
   "name": "bertui",
-  "version": "1.1.0",
-  "description": "Lightning-fast React dev server powered by Bun and Elysia",
+  "version": "1.1.1",
+  "description": "Lightning-fast React dev server powered by Bun and Elysia - Now with TypeScript support!",
   "type": "module",
   "main": "./index.js",
+  "types": "./types/index.d.ts",
   "bin": {
     "bertui": "./bin/bertui.js"
   },
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    },
     "./styles": "./src/styles/bertui.css",
     "./logger": "./src/logger/logger.js",
-    "./router": "./src/router/Router.jsx"
+    "./router": {
+      "types": "./types/router.d.ts",
+      "default": "./src/router/Router.jsx"
+    },
+    "./config": {
+      "types": "./types/config.d.ts",
+      "default": "./src/config/loadConfig.js"
+    }
   },
   "files": [
     "bin",
     "src",
+    "types",
     "index.js",
     "README.md",
     "LICENSE"
@@ -35,7 +47,11 @@
     "bundler",
     "fast",
     "hmr",
-    "file-based-routing"
+    "file-based-routing",
+    "typescript",
+    "seo",
+    "sitemap",
+    "server-islands"
   ],
   "author": "Pease Ernest",
   "license": "MIT",
@@ -52,6 +68,10 @@
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^19.2.3",
     "bun": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0"
   },
   "engines": {
     "bun": ">=1.0.0"

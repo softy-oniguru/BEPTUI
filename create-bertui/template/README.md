@@ -1,354 +1,251 @@
-# BertUI ⚡
+# BertUI Template ⚡
 
-**The fastest React framework for developers who value speed. Zero configuration, instant feedback, production-ready builds.**
+**Bun + Elysia + React + Template + User Interface**
 
-Zero configuration. 494ms dev server. 2.6-second builds.
-Powered by Bun and Elysia.
-
-[![Production Ready](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/BunElysiaReact/BERTUI)
-[![Bun Powered](https://img.shields.io/badge/runtime-Bun-f472b6)](https://bun.sh)
-[![Zero Config](https://img.shields.io/badge/config-zero-blue)](https://github.com/your-repo)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-## ⚡ Proven Performance
-
-**Not claims. Facts.** [See full benchmarks →](PERFORMANCE.md)
-
-BertUI vs Vite (tested Dec 2025 on Intel i3-2348M, 7.6GB RAM):
-
-| Metric | BertUI | Vite | Winner |
-|--------|--------|------|--------|
-| Warm Cache Install | **5.0s** | 35.3s | **BertUI (7x faster)** ⚡ |
-| Dev Server Startup | **494ms** | 713ms | **BertUI (1.4x faster)** ⚡ |
-| Production Build | **2.57s** | 4.70s | **BertUI (1.8x faster)** ⚡ |
-| Bundle Size | **100KB** | 220KB | **BertUI (2.2x smaller)** ⚡ |
-
-> **"Your speeds are lies!"** — Critics  
-> **Our response:** [Complete reproducible benchmarks](PERFORMANCE.md) with logs, methodology, and test scripts. Run them yourself.
+This is the official BertUI starter template. Everything you need to build fast React apps.
 
 ---
 
-## 🚀 Production Ready (v1.0.0+)
+## 🚀 What is BertUI?
 
-BertUI is **battle-tested in production** with:
-- ✅ Single CSS file optimization (combined from all source CSS)
-- ✅ Vercel deployment verified
-- ✅ 16ms compilation speed (9 files)
-- ✅ Zero-config static site generation
+**B**un - Fastest JavaScript runtime  
+**E**lysia - Lightning web framework  
+**R**eact - The UI library (98% of BertUI!)  
+**T**emplate - This starter  
+**UI** - User Interface components  
 
-**Live Demo:** https://bertui-docswebsite.vercel.app/
+BertUI is a React framework built for speed. If you know React, you already know BertUI.
 
-The fastest, zero-config React static site generator. Built for developer speed.
-
----
-
-## 📝 Image Handling
-
-BertUI automatically serves and copies images from two specific directories:
-- `src/images/` → Available at `/images/*` in development and copied to `dist/images/` in production
-- `public/` → Available at `/*` and copied to `dist/` root
-
-**Note:** Images referenced in your JSX/TSX that are located outside these directories (e.g., `../assets/` or absolute paths) will cause compilation errors. Always place project images in `src/images/` or `public/`.
+**New to React?** Learn it first: [react.dev/learn](https://react.dev/learn)
 
 ---
 
-## 🔧 Focused Design Decisions
+## ⚡ Quick Start
 
-### No Built-in CSS Animations
-**Intentional choice:** Removed CSS animation utilities to ensure rock-solid builds with Bun's bundler.
-
-**What this means:**
-- Zero runtime dependencies = faster, smaller, more reliable builds
-- Use your own CSS animations or libraries like Framer Motion
-- All other BertUI features work normally
-
-**Why this is better:** BertUI now delivers what it promises - the fastest possible React development experience with zero configuration headaches.
-
----
-
-## Features
-
-- ⚡ **Blazing Fast** - Built on Bun, the fastest JavaScript runtime
-- 📁 **File-Based Routing** - Zero config routing with dynamic routes
-- 🔥 **Hot Module Replacement** - Instant updates (30ms HMR)
-- 📦 **Zero Config** - Works out of the box, no webpack/vite config
-- 🚀 **Production Ready** - Optimized builds, semantic versioning
-- 🎯 **React-Focused** - Optimized for the React ecosystem
-- 📊 **Proven Performance** - Benchmarked and reproducible
-
----
-
-## Quick Start
-
-### Create New App (Recommended)
 ```bash
 bunx create-bertui my-app
 cd my-app
 bun run dev
 ```
 
-### Install Globally
-```bash
-bun add -g bertui
-```
-
-Or use directly:
-```bash
-bunx create-bertui my-app
-```
-
-That's it. No webpack config. No babel setup. No bullshit.
-
-This creates a complete BertUI project with:
-- Pre-configured file structure
-- Sample pages with routing
-- Beautiful example components
-- All dependencies installed
-
-**First install note:** Initial setup downloads Bun platform binaries (~154MB, one-time cost). Subsequent project creation takes ~5 seconds.
+Open `http://localhost:3000` and you're ready!
 
 ---
 
-## Why BertUI?
+## 📁 Template Structure
 
-- **Instant Feedback** - Dev server starts in 494ms. HMR updates in 30ms.
-- **Zero Config** - No `webpack.config.js`. No `vite.config.js`. Just code.
-- **Production Ready** - Static site generation with optimized builds (2.6s average).
-- **Small Bundles** - 2.2x smaller than Vite (100KB vs 220KB).
-- **Proven Fast** - Benchmarked against Vite with reproducible tests.
+```
+my-app/
+├── src/
+│   ├── pages/
+│   │   ├── index.jsx          # Home page (/)
+│   │   ├── about.jsx          # About (/about)
+│   │   └── blog/
+│   │       ├── index.jsx      # Blog list (/blog)
+│   │       └── [slug].jsx     # Blog post (/blog/:slug)
+│   ├── styles/
+│   │   ├── global.css         # Global styles
+│   │   ├── home.css
+│   │   ├── about.css
+│   │   └── blog.css
+│   ├── images/                # Your images
+│   └── main.jsx
+├── public/
+│   └── favicon.svg
+└── package.json
+```
 
 ---
 
-## Performance Deep Dive
+## 🎯 Key Features
 
-### Real-World Speed Comparison
+### File-Based Routing
+Create `src/pages/contact.jsx` → automatically get `/contact` route
 
-**Daily Development (Where It Matters):**
-```
-Project Creation:    BertUI 5s     vs  Vite 35s     → 7x faster ⚡
-Dev Server Start:    BertUI 494ms  vs  Vite 713ms   → 1.4x faster ⚡
-Production Build:    BertUI 2.6s   vs  Vite 4.7s    → 1.8x faster ⚡
-Bundle Size:         BertUI 100KB  vs  Vite 220KB   → 2.2x smaller ⚡
-```
+### Dynamic Routes
+Create `src/pages/user/[id].jsx` → matches `/user/123`, `/user/abc`, etc.
 
-**Time Saved Per Year:**
-- 5 projects/week: ~2.5 minutes/week = **2+ hours/year**
-- 10 restarts/day: ~2.2 seconds/day = **9 minutes/year**
-- 3 builds/day: ~6.4 seconds/day = **32 minutes/year**
-
-**Total yearly savings: ~2.7 hours** of pure waiting time eliminated.
-
-**But the real win?** Flow state. When tools respond instantly, you stay focused and ship faster.
-
-### Benchmark Transparency
-
-All performance claims are backed by:
-- ✅ Real hardware (not cloud VMs)
-- ✅ Default configurations (no cherry-picked optimizations)
-- ✅ Multiple test runs (averaged for accuracy)
-- ✅ Complete logs (every millisecond documented)
-- ✅ Reproducible scripts (run them yourself)
-
-**[Read the full performance report →](PERFORMANCE.md)**
-
-**[Run benchmarks yourself →](https://github.com/BunElysiaReact/BERTUI/tree/main/benchmarks)**
-
----
-
-## When to Use BertUI
-
-✅ You want to build React apps without tooling complexity  
-✅ You value dev server speed over every other feature  
-✅ You're using Bun (or willing to try it)  
-✅ You don't need SSR/islands/multi-framework support  
-✅ You create multiple projects frequently (7x faster scaffolding)  
-✅ You want faster CI/CD builds (1.8x faster production builds)  
-
----
-
-## BertUI Is NOT For You If...
-
-❌ You need server-side rendering (SSR)  
-❌ You're building a content-heavy blog with MDX  
-❌ You want multi-framework support (Vue, Svelte, etc.)  
-❌ You can't use Bun (company policy, legacy systems)  
-❌ You only create one project ever (first install takes 5 minutes)  
-
-**For those use cases, we recommend:**
-- SSR → Next.js, Remix
-- Content sites → Astro, Eleventy
-- Multi-framework → Astro, Vite
-
-BertUI is laser-focused on one thing: **Fast React development.**  
-If that's what you need, you'll love it. If not, use the right tool.
-
----
-
-## File-Based Routing
-
-BertUI has **complete file-based routing** with zero configuration:
-
-### 📁 Features
-
-#### File-Based Routing
-```
-src/pages/index.jsx       → /
-src/pages/about.jsx       → /about
-src/pages/blog/index.jsx  → /blog
-```
-
-#### Dynamic Routes
-```
-src/pages/user/[id].jsx           → /user/:id
-src/pages/blog/[slug].jsx         → /blog/:slug
-src/pages/shop/[cat]/[prod].jsx   → /shop/:cat/:prod
-```
-
-#### Navigation Components
 ```jsx
-import { Link, navigate } from 'bertui/router';
-
-// Link component
-<Link to="/about">About</Link>
-
-// Programmatic navigation
-const { navigate } = useRouter();
-navigate('/dashboard');
-```
-
-#### Route Parameters
-```jsx
-export default function UserProfile({ params }) {
-  return <div>User ID: {params.id}</div>;
+export default function User({ params }) {
+  return <h1>User: {params.id}</h1>;
 }
 ```
 
----
-
-## 🎓 Usage Example
+### Server Islands (NEW in v1.1.0!)
+Add one line for perfect SEO:
 
 ```jsx
-// src/pages/index.jsx
+export const render = "server";
+
+export const meta = {
+  title: "My Page",
+  description: "SEO description"
+};
+
+export default function MyPage() {
+  return <h1>Pre-rendered HTML!</h1>;
+}
+```
+
+Learn more: [bertui-docswebsite.vercel.app/server-islands](https://bertui-docswebsite.vercel.app/server-islands)
+
+---
+
+## 🎨 Styling
+
+This template uses CSS files. Simple and fast.
+
+### Global Styles
+Edit `src/styles/global.css` for site-wide styles.
+
+### Page Styles
+Each page has its own CSS:
+- `home.css` for home page
+- `about.css` for about page
+- `blog.css` for blog
+
+### Add Your Own
+```jsx
+import '../styles/my-page.css';
+```
+
+---
+
+## 🖼️ Images
+
+**Two locations only:**
+
+1. `src/images/` - Component images
+```jsx
+import Logo from '../images/logo.png';
+<img src={Logo} alt="Logo" />
+```
+
+2. `public/` - Static assets
+```jsx
+<img src="/favicon.svg" alt="Icon" />
+```
+
+**Don't use other folders!** They break builds.
+
+---
+
+## 🏗️ Build & Deploy
+
+### Production Build
+```bash
+bun run build
+```
+
+Creates optimized `dist/` folder.
+
+### Deploy to Vercel
+```bash
+vercel
+```
+
+Or push to GitHub and import to Vercel. Auto-detects BertUI!
+
+---
+
+## 🎓 Learning Resources
+
+- **BertUI Docs:** [bertui-docswebsite.vercel.app](https://bertui-docswebsite.vercel.app/)
+- **Server Islands:** [bertui-docswebsite.vercel.app/server-islands](https://bertui-docswebsite.vercel.app/server-islands)
+- **React Docs:** [react.dev/learn](https://react.dev/learn)
+
+---
+
+## 💬 Community & Support
+
+- **GitHub:** [github.com/BunElysiaReact/BERTUI](https://github.com/BunElysiaReact/BERTUI)
+- **Discord:** [discord.gg/kvbXfkJG](https://discord.gg/kvbXfkJG)
+- **Issues:** [github.com/BunElysiaReact/BERTUI/issues](https://github.com/BunElysiaReact/BERTUI/issues)
+
+**Please leave an honest review!** This library is my passion project. If you like it, star the repo and recommend it to others.
+
+---
+
+## 🚧 Coming Soon
+
+**Plugins are in development!** 
+
+We're building:
+- Icons plugin (best in the world!)
+- More tooling
+- Cool integrations
+
+Stay tuned. We're building something amazing.
+
+---
+
+## 📊 Why BertUI?
+
+**494ms** dev server startup  
+**265ms** production builds  
+**100KB** bundle size  
+**30ms** HMR updates  
+
+Not just claims - proven benchmarks: [See PERFORMANCE.md](https://github.com/BunElysiaReact/BERTUI/blob/main/PERFORMANCE.md)
+
+---
+
+## 📝 Template Tips
+
+### Remove What You Don't Need
+Don't need the blog? Delete `src/pages/blog/` and done.
+
+### Use Link for Navigation
+```jsx
 import { Link } from 'bertui/router';
-
-export default function Home() {
-  return (
-    <div>
-      <h1>Welcome to My App!</h1>
-      <nav>
-        <Link to="/about">About</Link>
-        <Link to="/blog">Blog</Link>
-        <Link to="/user/123">My Profile</Link>
-      </nav>
-    </div>
-  );
-}
-
-// src/pages/user/[id].jsx
-export default function UserProfile({ params }) {
-  return (
-    <div>
-      <h1>User {params.id}</h1>
-      <p>Profile page for user {params.id}</p>
-    </div>
-  );
-}
+<Link to="/about">About</Link>  // ✅ Fast client-side
+<a href="/about">About</a>       // ❌ Full page reload
 ```
 
----
-
-## Production Use
-
-BertUI is production-ready as of v1.0.0.
-
-**Live sites using BertUI:**
-- [BertUI Docs](https://bertui-docswebsite.vercel.app/) (you're looking at it)
-
-**Deployment:**
-- ✅ Vercel (zero config)
-- ✅ Netlify (works out of the box)
-- ✅ Cloudflare Pages (instant deploys)
-- ✅ Any static host
-
-**Enterprise-ready features:**
-- Semantic versioning (SemVer)
-- MIT licensed
-- Active maintenance
-- Issue response within 24 hours
-- Reproducible performance benchmarks
+### Keep It Simple
+This template is intentionally simple. Add complexity only when you need it.
 
 ---
 
-## Commands
+## ⚡ Performance
 
-```bash
-bertui dev         # Start dev server (494ms startup, benchmarked)
-bertui build       # Build for production (2.6s builds, benchmarked)
-```
+BertUI is **fast** by default:
+- Bun runtime speed
+- Automatic code splitting
+- Optimized builds
+- Minimal bundle size
 
----
-
-## 📈 Performance
-
-- **Fast compilation:** Bun's speed + code splitting (16ms for 9 files)
-- **Small bundles:** Each route is a separate chunk (100KB total)
-- **Quick HMR:** Only recompiles changed files (30ms updates)
-- **Smart routing:** Static routes matched first
-- **Proven metrics:** All claims benchmarked and reproducible
+You write code. We handle speed.
 
 ---
 
-## 🏆 Benchmark vs Competition
+## 📄 License
 
-**"Talk is cheap. Show me the benchmarks."** — Linus Torvalds
-
-We did. [Full performance report with methodology →](PERFORMANCE.md)
-
-**TL;DR:**
-- 7x faster project creation (warm cache)
-- 1.4x faster dev server startup
-- 1.8x faster production builds
-- 2.2x smaller bundles
-
-**The only thing slower?** First-time install (one-time 5-minute cost for Bun binaries). Everything else? BertUI dominates.
+MIT License - Use it however you want!
 
 ---
 
-## Different Tools for Different Jobs
+## 🙏 Credits
 
-**Astro** is for content sites with islands architecture.  
-**Next.js** is for complex SSR applications.  
-**Vite** is for multi-framework projects needing configuration.
+**Created by Pease Ernest**
 
-**BertUI** is for React apps that need instant dev feedback.  
-If you want the fastest possible React development experience, use BertUI.
+This is my own library. I invested real time building it. If BertUI helps you, please:
+- ⭐ Star the repo
+- 📝 Leave a review
+- 🗣️ Tell others about it
 
-Not convinced? Run the benchmarks yourself:
-```bash
-git clone https://github.com/BunElysiaReact/BERTUI
-cd BERTUI/benchmarks
-./speed-test.sh
-```
+We're unpopular now, but with your help, we can grow!
 
 ---
 
-## 📚 Resources
+## 🎯 Remember
 
-- **Documentation:** https://bertui-docswebsite.vercel.app/
-- **Performance Benchmarks:** [PERFORMANCE.md](PERFORMANCE.md)
-- **GitHub:** https://github.com/BunElysiaReact/BERTUI
-- **NPM:** https://www.npmjs.com/package/bertui
-- **Issues:** https://github.com/BunElysiaReact/BERTUI/issues
+**BertUI is 98% React.** If you know React, you know BertUI.
 
----
+**New to React?** Learn at [react.dev/learn](https://react.dev/learn) first.
 
-## License
-
-MIT
+**Ready to build?** Start coding in `src/pages/` and watch the magic happen!
 
 ---
 
-**Built with 🔥 by [Pease Ernest](https://github.com/Ernest12287)**  
-*Because developers deserve faster tooling.*
-
-**Performance claims questioned?** [Read the receipts.](PERFORMANCE.md)
+**Built with ⚡ and passion**

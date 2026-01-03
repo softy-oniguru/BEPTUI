@@ -1,3 +1,4 @@
+// src/pages/index.jsx
 import { Link } from 'bertui/router';
 import '../styles/home.css';
 
@@ -9,7 +10,7 @@ export default function Home() {
         <div className="home-nav-links">
           <Link to="/" className="nav-link active">Home</Link>
           <Link to="/about" className="nav-link">About</Link>
-          <Link to="/blog" className="nav-link">Blog</Link>
+          <Link to="/server-islands" className="nav-link">Server Islands</Link>
         </div>
       </nav>
 
@@ -17,15 +18,17 @@ export default function Home() {
         <h1 className="home-title">
           Build Lightning-Fast
           <br />
-          React Apps
+          React Apps with BertUI
         </h1>
 
         <p className="home-subtitle">
-          File-based routing • Zero config • Blazing fast HMR • Powered by Bun
+          <strong>Bun + Elysia + React + Template + User Interface</strong>
+          <br />
+          494ms dev server • 265ms builds • Perfect SEO with Server Islands
         </p>
 
         <div className="home-cta">
-          <Link to="/blog" className="btn btn-primary">
+          <Link to="/server-islands" className="btn btn-primary">
             Get Started →
           </Link>
           <Link to="/about" className="btn btn-secondary">
@@ -37,34 +40,44 @@ export default function Home() {
           <FeatureCard 
             icon="⚡"
             title="Lightning Fast"
-            description="Built on Bun for incredible speed. Instant dev server startup and blazing fast HMR."
+            description="494ms dev server startup and 30ms HMR updates."
           />
           <FeatureCard 
             icon="📁"
             title="File-Based Routing"
-            description="Create pages/about.jsx and get /about route. Dynamic routes with [param] syntax."
+            description="Create pages/about.jsx and get /about route automatically."
           />
           <FeatureCard 
-            icon="🎨"
-            title="Zero Config"
-            description="No webpack, no babel, no config files. Just write React and ship."
-          />
-          <FeatureCard 
-            icon="🔥"
-            title="Hot Module Replacement"
-            description="See your changes instantly without losing component state."
+            icon="🏝️"
+            title="Server Islands"
+            description="Add one line, get static HTML. Perfect SEO without complexity."
           />
         </div>
 
+        <div className="home-stack">
+          <h2>What is BertUI?</h2>
+          <p><strong>B</strong>un - Fastest JavaScript runtime</p>
+          <p><strong>E</strong>lysia - Lightning web framework</p>
+          <p><strong>R</strong>eact - UI library (98% of BertUI is React!)</p>
+          <p><strong>T</strong>emplate - This starter you're using</p>
+          <p><strong>UI</strong> - Beautiful user interfaces</p>
+        </div>
+
         <div className="home-start">
-          <h2 className="home-start-title">Ready to build something amazing?</h2>
-          <p className="home-start-subtitle">Get started in seconds with a single command</p>
+          <h2>Ready to build?</h2>
           <code className="home-start-code">bunx create-bertui my-app</code>
+          <p>
+            Full docs: <a href="https://bertui-docswebsite.vercel.app/" target="_blank" rel="noopener">bertui-docswebsite.vercel.app</a>
+          </p>
         </div>
       </main>
 
       <footer className="home-footer">
-        <p>Built with BertUI • MIT License</p>
+        <p>Built with BertUI v1.1.0 • Created by Pease Ernest</p>
+        <p>
+          <a href="https://github.com/BunElysiaReact/BERTUI" target="_blank" rel="noopener">GitHub</a> • 
+          <a href="https://bertui-docswebsite.vercel.app/" target="_blank" rel="noopener">Docs</a>
+        </p>
       </footer>
     </div>
   );
