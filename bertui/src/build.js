@@ -1,8 +1,9 @@
-// bertui/src/build.js - FINAL ORCHESTRATOR
+// bertui/src/build.js - UPDATED WITH PAGE BUILDER
 import { join } from 'path';
 import { existsSync, mkdirSync, rmSync } from 'fs';
 import logger from './logger/logger.js';
 import { loadEnvVariables } from './utils/env.js';
+import { runPageBuilder } from './pagebuilder/core.js';
 
 // Import modular components
 import { compileForBuild } from './build/compiler/index.js';
@@ -11,8 +12,6 @@ import { copyAllStaticAssets } from './build/processors/asset-processor.js';
 import { generateProductionHTML } from './build/generators/html-generator.js';
 import { generateSitemap } from './build/generators/sitemap-generator.js';
 import { generateRobots } from './build/generators/robots-generator.js';
-
-
 
 export async function buildProduction(options = {}) {
   const root = options.root || process.cwd();
@@ -34,6 +33,15 @@ export async function buildProduction(options = {}) {
     // Step 0: Environment
     logger.info('Step 0: Loading environment variables...');
     const envVars = loadEnvVariables(root);
+    
+    // ✅ NEW: Step 0.5: Load config and run Page Builder
+    const { loadConfig } = await import('./config/loadConfig.js');
+    const config = await loadConfig(root);
+    
+    if (config.pageBuilder) {
+      logger.info('Step 0.5: Running Page Builder...');
+      await runPageBuilder(root, config);
+    }
     
     // Step 1: Compilation
     logger.info('Step 1: Compiling and detecting Server Islands...');
@@ -63,8 +71,6 @@ export async function buildProduction(options = {}) {
     
     // Step 5: HTML Generation
     logger.info('Step 5: Generating HTML with Server Islands...');
-    const { loadConfig } = await import('./config/loadConfig.js');
-    const config = await loadConfig(root);
     await generateProductionHTML(root, outDir, result, routes, serverIslands, config);
     
     // Step 6: Sitemap

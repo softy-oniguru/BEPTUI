@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "elysia": "^1.0.0",
-    "ernest-logger": "latest",
+    "ernest-logger": "^2.0.0",
     "lightningcss": "^1.30.2"
   },
   "peerDependencies": {

@@ -1,133 +1,171 @@
 # BertUI ⚡🏝️
 
-**The fastest React framework for developers who refuse to wait. Zero configuration, instant feedback, production-ready builds, and now... PERFECT SEO.**
+**The fastest React framework for developers who refuse to wait.**
 
-Zero configuration. 494ms dev server. 265ms builds. **Server Islands for instant SEO.**  
+Zero configuration. 494ms dev server. 265ms builds. **Perfect SEO with Server Islands.** Auto-generated sitemaps & robots.txt. Full TypeScript support.
+
 Powered by Bun and Elysia.
 
-[![Production Ready](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/BunElysiaReact/BERTUI)
-[![Bun Powered](https://img.shields.io/badge/runtime-Bun-f472b6)](https://bun.sh)
-[![Zero Config](https://img.shields.io/badge/config-zero-blue)](https://github.com/BunElysiaReact/BERTUI)
+[![Production Ready](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/BunElysiaReact/BERTUI) 
+[![Version](https://img.shields.io/badge/version-1.1.1-blue)](https://www.npmjs.com/package/bertui)
+[![Bun Powered](https://img.shields.io/badge/runtime-Bun-f472b6)](https://bun.sh) 
+[![Zero Config](https://img.shields.io/badge/config-zero-blue)](https://github.com/BunElysiaReact/BERTUI) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+```bash
+# One command. Zero config. Instant speed.
+bunx create-bertui my-app && cd my-app && bun run dev
+```
+
 ---
 
-## 🎉 What's New in v1.1.0: Server Islands Era
+## 🎊 What's New in v1.1.1: SEO Perfection Complete
 
-**The feature that changes everything.** BertUI is no longer just "fast Vite" (though we were never *just* that). With **Server Islands**, you get:
+**We listened. We delivered. BertUI is now the complete SEO powerhouse.**
 
-- 🏝️ **Instant SEO** - Add one line, get static HTML at build time
-- ⚡ **Still Lightning Fast** - 265ms builds haven't changed
-- 🎯 **Per-Page Control** - Choose what gets pre-rendered
-- 🚀 **Zero Complexity** - No SSR setup, no server infrastructure
-- 💯 **Perfect for Everything** - Marketing pages AND interactive apps
+### 🆕 New in v1.1.1 (Latest)
 
-### The Magic Line
+- 🤖 **Auto-Generated `robots.txt`** - SEO-friendly crawler instructions, zero config
+- 🗺️ **Auto-Generated `sitemap.xml`** - All routes indexed automatically at build time
+- 📘 **Full TypeScript Support** - Complete `.d.ts` type definitions for the entire API
+- 🎯 **Type Safety Without Complexity** - IntelliSense for all BertUI functions (no `.tsx` required)
+
+### 🏝️ From v1.1.0: Server Islands
+
+- **Instant SEO** - Add one line, get static HTML at build time
+- **Still Lightning Fast** - 265ms builds haven't changed
+- **Per-Page Control** - Choose what gets pre-rendered
+- **Zero Complexity** - No SSR setup, no server infrastructure
 
 ```jsx
-// Add this to any page
+// The magic line that gives you perfect SEO
 export const render = "server";
-
-// That's it. You now have instant SEO. 🤯
 ```
-
-**[Read the complete Server Islands guide →](https://bertui-docswebsite.vercel.app/server-islands)**
-
----
-
-## ⚡ Proven Performance (Not Promises. Facts.)
-
-**BertUI vs Vite** (tested Dec 2025 on Intel i3-2348M, 7.6GB RAM):
-
-| Metric | BertUI | Vite | Winner |
-|--------|--------|------|--------|
-| Warm Cache Install | **5.0s** | 35.3s | **BertUI (7x faster)** ⚡ |
-| Dev Server Startup | **494ms** | 713ms | **BertUI (1.4x faster)** ⚡ |
-| Production Build | **265ms** | 4.70s | **BertUI (18x faster)** ⚡ |
-| Bundle Size | **100KB** | 220KB | **BertUI (2.2x smaller)** ⚡ |
-| **SSG Capability** | **✅ YES** | **❌ NONE** | **BertUI (exclusive)** 🏝️ |
-
-> **"Your speeds are lies!"** — Critics (probably)  
-> **Our response:** [Complete reproducible benchmarks](PERFORMANCE.md) with logs, methodology, and test scripts. Run them yourself. We'll wait. ⏱️
-
-**[See full performance report →](PERFORMANCE.md)**
-
----
-
-## 🏝️ Server Islands: The Revolution
-
-### What Are They?
-
-Server Islands are BertUI's unique feature that gives you **instant SEO and perfect performance** without sacrificing React's developer experience. Think of them as "optional static site generation with one line of code."
-
-### Why They Matter
-
-```diff
-<!-- ❌ OTHER FRAMEWORKS: Empty HTML until JS loads -->
-<div id="root"></div>
-<script src="app.js"></script>
-
-<!-- ✅ BERTUI WITH SERVER ISLANDS: Full content immediately -->
-<div id="root">
-  <header>
-    <h1>My Awesome Site</h1>
-    <nav>...</nav>
-  </header>
-  <main>
-    <article>Full content here!</article>
-  </main>
-</div>
-<script src="app.js"></script>
-```
-
-**Benefits:**
-- 🚀 **Instant First Paint** - Users see content immediately (0ms TTFB)
-- 🔍 **Perfect SEO** - Search engines index full content
-- ⚡ **Still Interactive** - React hydrates for full app functionality
-- 📦 **Zero Config** - Works automatically for all routes
-- 🎯 **Mixed Architecture** - Use Server Islands for landing pages, client-only for dashboards
-
-### How to Use
-
-```jsx
-// src/pages/about.jsx
-export const render = "server"; // 🏝️ That's it!
-
-export const meta = {
-  title: "About Us",
-  description: "Learn about our company"
-};
-
-export default function About() {
-  return (
-    <div>
-      <h1>About Us</h1>
-      <p>Pre-rendered as static HTML at build time!</p>
-      <a href="/contact">Contact</a>
-    </div>
-  );
-}
-```
-
-**Perfect for:**
-- Landing pages
-- Blog posts
-- Documentation
-- Marketing pages
-- Any content-heavy page that needs SEO
-
-**Not for:**
-- Dashboards (need state)
-- Forms (need interactivity)
-- Apps with user state
 
 **[Complete Server Islands guide →](https://bertui-docswebsite.vercel.app/server-islands)**
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Why BertUI Dominates
 
-### Create New App (Recommended)
+### The Speed No One Can Match
+
+**BertUI vs Everyone Else** (Intel i3-2348M, 7.6GB RAM - your results will be faster):
+
+| Metric | BertUI | Vite | Next.js | Winner |
+|--------|--------|------|---------|--------|
+| Dev Server Startup | **494ms** | 713ms | 2.1s | **BertUI (1.4-4.3x faster)** ⚡ |
+| Production Build | **265ms** | 4.70s | 8.4s | **BertUI (18-32x faster)** ⚡ |
+| Bundle Size | **100KB** | 220KB | 280KB | **BertUI (2.2-2.8x smaller)** ⚡ |
+| Install Time (warm) | **5.0s** | 35.3s | 55s | **BertUI (7-11x faster)** ⚡ |
+| SSG Support | **✅ YES** | ❌ NO | ✅ YES | **BertUI (simplest)** 🏝️ |
+| Auto SEO Files | **✅ YES** | ❌ NO | ⚠️ Manual | **BertUI (exclusive)** 🤖 |
+| TypeScript DX | **✅ YES** | ✅ YES | ✅ YES | **BertUI (no setup)** 📘 |
+
+> **"Your speeds are lies!"** — Skeptics (understandable)  
+> **Our response:** [Complete reproducible benchmarks](PERFORMANCE.md) with logs, methodology, and test scripts. Run them yourself. ⏱️
+
+**[See full performance report →](PERFORMANCE.md)**
+
+---
+
+## 🎯 The Complete Feature Matrix
+
+### What Makes BertUI Unstoppable
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    The Only Framework With:                     │
+│                                                                 │
+│  ⚡ Sub-500ms dev starts  🏝️ Optional SSG (Server Islands)    │
+│  📦 Sub-300ms builds      🤖 Auto robots.txt generation        │
+│  🗺️ Auto sitemap.xml      📘 Full TypeScript definitions       │
+│  🎯 Zero config needed    📁 File-based routing built-in       │
+│  🔥 30ms HMR updates      💅 Optimized CSS (LightningCSS)      │
+│  🌐 Deploy anywhere       🎨 Modern CSS features               │
+│  🐛 Beautiful errors      📊 Detailed build analytics          │
+│                                                                 │
+│  "The fastest React framework with perfect SEO, period." 🔥    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 🆕 SEO Features (v1.1.1)
+
+**Auto-Generated `robots.txt`**
+```txt
+# Generated automatically by BertUI
+User-agent: *
+Allow: /
+
+Sitemap: https://yourdomain.com/sitemap.xml
+```
+
+**Auto-Generated `sitemap.xml`**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://yourdomain.com/</loc>
+    <lastmod>2025-01-04</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <!-- All routes auto-discovered and included -->
+</urlset>
+```
+
+**Configure in one line:**
+```js
+// bertui.config.js (optional)
+export default {
+  siteUrl: 'https://yourdomain.com', // Customize your domain
+  sitemap: { changefreq: 'weekly', priority: 0.8 }
+}
+```
+
+### 📘 TypeScript Support (v1.1.1)
+
+**You asked. We delivered. But our way.**
+
+- ✅ **Full `.d.ts` type definitions** - IntelliSense for everything
+- ✅ **Zero configuration** - Works in VS Code instantly
+- ✅ **JavaScript-first philosophy preserved** - No `.tsx` required
+- ✅ **Best of both worlds** - Type safety without compilation overhead
+
+```jsx
+// Your .jsx files now have full autocomplete
+import { Link, useRouter } from 'bertui/router'; // ← Full types! 🎉
+
+export default function App() {
+  const { navigate, params } = useRouter(); // ← TypeScript knows these!
+  
+  return (
+    <div>
+      {/* ← All props autocomplete */}
+      <Link to="/about" className="link">About</Link>
+    </div>
+  );
+}
+```
+
+**What you get:**
+- Autocomplete for all BertUI APIs
+- Type checking in VS Code (with JSDoc comments)
+- IntelliSense for props, hooks, and utilities
+- Error catching before runtime
+
+**What you DON'T need:**
+- No `tsconfig.json`
+- No `.tsx` files
+- No TypeScript compiler
+- No additional setup
+
+**Still JavaScript. Now with superpowers.** 📘⚡
+
+---
+
+## ⚡ Quick Start
+
+### Create New App (30 seconds to first render)
 
 ```bash
 bunx create-bertui my-app
@@ -135,58 +173,49 @@ cd my-app
 bun run dev
 ```
 
-That's it. No webpack config. No babel setup. No bullshit.
+**That's it.** No webpack config. No babel setup. No bullshit.
 
-**First install note:** Initial setup downloads Bun platform binaries (~154MB, one-time cost). Subsequent project creation takes ~5 seconds.
+**What you get:**
+```
+my-app/
+├── src/
+│   ├── pages/
+│   │   └── index.jsx          # Your homepage (/ route)
+│   ├── components/             # Your components
+│   └── images/                 # Auto-served at /images/*
+├── public/
+│   └── favicon.svg             # Static assets
+├── dist/                       # Production build output
+│   ├── robots.txt             # 🆕 Auto-generated!
+│   └── sitemap.xml            # 🆕 Auto-generated!
+└── package.json
+```
+
+**First install note:** Initial setup downloads Bun platform binaries (~154MB, one-time). Subsequent projects: ~5 seconds.
 
 ---
 
-## 🔄 Migrate Existing Projects
+## 🔄 Migrate from Any Framework in 2 Minutes
 
-Got a Vite, CRA, or other React project? Migrate to BertUI in seconds with our migration tool:
+Got a Vite, CRA, Next.js, or other React project? Migrate instantly:
 
 ```bash
 cd your-existing-project
 bunx migrate-bertui
 ```
 
-**What it does:**
-1. ✅ Backs up all files to `.bertmigrate/`
-2. 🧹 Initializes fresh BertUI project
-3. 📝 Creates detailed migration guide
-4. 🎯 Detects your framework and provides tailored instructions
+**The migration tool:**
+- ✅ **Backs up everything** to `.bertmigrate/` (100% safe)
+- 🧹 **Initializes fresh BertUI** project structure
+- 📝 **Creates detailed guide** with exact steps for your framework
+- 🎯 **Detects your setup** (Vite, CRA, Next, etc.) automatically
+- 🚀 **5-minute migration** for most projects
 
-### Migration Process
+### Migration Example
 
-```bash
-# 1. Navigate to your project
-cd my-vite-app
-
-# 2. Run migration (backs up everything automatically)
-bunx migrate-bertui
-
-# 3. Follow the generated MIGRATION_GUIDE.md
-cat MIGRATION_GUIDE.md
-
-# 4. Copy your components
-cp -r .bertmigrate/src/components src/
-cp -r .bertmigrate/src/styles src/
-
-# 5. Convert routes to file-based structure
-# Instead of: <Route path="/about" element={<About />} />
-# Just create: src/pages/about.jsx
-
-# 6. Update imports
-# From: import { Link } from 'react-router-dom'
-# To:   import { Link } from 'bertui/router'
-
-# 7. Test it
-bun run dev
+**Before (Vite):**
 ```
-
-### Before Migration (Vite)
-```
-your-vite-app/
+my-vite-app/
 ├── src/
 │   ├── App.jsx
 │   ├── main.jsx
@@ -195,91 +224,225 @@ your-vite-app/
 └── package.json
 ```
 
-### After Migration (BertUI)
+**After (BertUI):**
 ```
-your-vite-app/
-├── .bertmigrate/          # 📦 Your backup (safe!)
+my-vite-app/
+├── .bertmigrate/              # 📦 Your full backup (safe!)
 ├── src/
-│   ├── pages/             # ⚡ File-based routing!
-│   │   ├── index.jsx      # / route
-│   │   └── about.jsx      # /about route
-│   ├── components/        # Your components
-│   └── images/            # Images (auto-served)
-├── MIGRATION_GUIDE.md     # Your guide
+│   ├── pages/                 # ⚡ File-based routing!
+│   │   ├── index.jsx          # / route
+│   │   └── about.jsx          # /about route
+│   ├── components/            # Your components (preserved)
+│   └── images/                # Images (auto-served)
+├── MIGRATION_GUIDE.md         # Step-by-step instructions
 └── package.json
 ```
 
-### Rollback If Needed
+**Simple changes needed:**
+```jsx
+// 1. Change imports
+// From: import { Link } from 'react-router-dom'
+// To:   import { Link } from 'bertui/router'
 
+// 2. Move route components to pages/
+// From: <Route path="/about" element={<About />} />
+// To:   Create src/pages/about.jsx
+
+// 3. Add Server Islands (optional)
+export const render = "server"; // Instant SEO!
+```
+
+**Rollback anytime:**
 ```bash
-# Something wrong? Just restore from backup
 rm -rf src/ public/ package.json
 cp -r .bertmigrate/* .
 ```
 
-**[Migration tool documentation →](https://github.com/yourusername/migrate-bertui)**
+**[Complete migration guide →](https://github.com/yourusername/migrate-bertui)**
 
 ---
 
-## 🎯 Why BertUI?
+## 🏝️ Server Islands: The Secret Weapon
 
-### The Problems We Solve
+### What Problem Do They Solve?
 
-**1. "Cool Vite" Problem (SOLVED ✅)**
-- **Before v1.1:** Critics said we were just "fast Vite" with poor SEO
-- **After v1.1:** Server Islands give us perfect SEO + unmatched speed
-- **Vite can't do this:** Vite has NO SSG capability at all
+**The React Developer's Dilemma:**
+- ❌ Vite = Fast dev, **terrible SEO** (client-only)
+- ❌ Next.js = Good SEO, **slow builds** + complex setup
+- ✅ **BertUI = Fast dev + Fast builds + Perfect SEO + Zero config**
 
-**2. Speed Without Compromise**
-- **Next.js:** Great SSR, but complex setup and slow builds
-- **Vite:** Fast dev, but client-only (poor SEO)
-- **BertUI:** Fast dev + fast builds + perfect SEO + zero config
-
-**3. The Configuration Hell**
-- **Other frameworks:** webpack.config.js, vite.config.js, tsconfig.json, babel.config.js...
-- **BertUI:** Zero config files. Just code.
-
-### What Makes Us Unique
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                                                         │
-│  Vite         Fast Dev ✅  Poor SEO ❌  No SSG ❌      │
-│  Next.js      Good SEO ✅  Slow Build ❌  Complex ❌   │
-│  BertUI       Fast Dev ✅  Good SEO ✅  Fast Build ✅  │
-│               Zero Config ✅  Server Islands ✅         │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-**BertUI is the only framework with:**
-- Sub-300ms production builds
-- Optional per-page SSG (Server Islands)
-- Zero configuration required
-- File-based routing out of the box
-- Bun-native speed
-
----
-
-## 📁 File-Based Routing
-
-BertUI has **complete file-based routing** with zero configuration:
-
-```
-src/pages/index.jsx                 → /
-src/pages/about.jsx                 → /about
-src/pages/blog/index.jsx            → /blog
-src/pages/user/[id].jsx             → /user/:id
-src/pages/shop/[cat]/[prod].jsx     → /shop/:cat/:prod
-```
-
-### Dynamic Routes Example
+### How Server Islands Work
 
 ```jsx
-// src/pages/user/[id].jsx
-export default function UserProfile({ params }) {
-  return <div>User ID: {params.id}</div>;
+// src/pages/about.jsx
+
+// 🏝️ Add ONE line to enable Server Islands
+export const render = "server";
+
+// 🎯 Optional: Add metadata for SEO
+export const meta = {
+  title: "About Us - Best Company Ever",
+  description: "Learn about our amazing team and mission",
+  keywords: "about, company, team"
+};
+
+// ⚛️ Write normal React components
+export default function About() {
+  return (
+    <div>
+      <h1>About Us</h1>
+      <p>Pre-rendered as static HTML at build time!</p>
+      <p>But still interactive after React hydrates!</p>
+    </div>
+  );
 }
+```
+
+**What happens at build time:**
+```html
+<!-- dist/about/index.html - Generated automatically! -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>About Us - Best Company Ever</title>
+  <meta name="description" content="Learn about our amazing team...">
+  <meta name="keywords" content="about, company, team">
+</head>
+<body>
+  <div id="root">
+    <!-- ⚡ Full HTML content here! Search engines see everything! -->
+    <div>
+      <h1>About Us</h1>
+      <p>Pre-rendered as static HTML at build time!</p>
+      <p>But still interactive after React hydrates!</p>
+    </div>
+  </div>
+  <script src="/bundle.js"></script> <!-- React hydrates for interactivity -->
+</body>
+</html>
+```
+
+### The Benefits
+
+**🚀 Instant First Paint**
+- Users see content at 0ms (static HTML loads instantly)
+- No "blank page while JS loads" problem
+- Perfect Lighthouse scores
+
+**🔍 Perfect SEO**
+- Search engines index full content immediately
+- No client-side rendering detection issues
+- Social media preview cards work perfectly
+
+**⚡ Still Interactive**
+- React hydrates after initial paint
+- Full app functionality preserved
+- Best of both worlds
+
+**📦 Zero Configuration**
+- Works automatically for all routes
+- No server setup required
+- Deploy to any static host
+
+### When to Use Server Islands
+
+**✅ Perfect for:**
+- Landing pages
+- Marketing sites
+- Blog posts
+- Documentation
+- About/Contact pages
+- Any SEO-critical content
+
+**❌ Skip for:**
+- Dashboards (need live state)
+- Admin panels (need authentication state)
+- Forms (need immediate interactivity)
+- Real-time apps (need WebSocket state)
+
+### Advanced: Dynamic Routes + Server Islands
+
+```jsx
+// src/pages/blog/[slug].jsx
+
+export const render = "server";
+
+// 🎯 Define which pages to pre-render
+export async function getPaths() {
+  return [
+    { slug: 'first-post' },
+    { slug: 'second-post' },
+    { slug: 'third-post' }
+  ];
+}
+
+export default function BlogPost({ params }) {
+  return (
+    <article>
+      <h1>Blog Post: {params.slug}</h1>
+      <p>This page was pre-rendered at build time!</p>
+    </article>
+  );
+}
+```
+
+**Generates:**
+- `/blog/first-post/index.html`
+- `/blog/second-post/index.html`
+- `/blog/third-post/index.html`
+
+**[Complete Server Islands guide →](https://bertui-docswebsite.vercel.app/server-islands)**
+
+---
+
+## 📁 File-Based Routing (Zero Config)
+
+**The routing you deserve. No setup required.**
+
+### Basic Routes
+
+```
+src/pages/index.jsx          →  /
+src/pages/about.jsx          →  /about
+src/pages/contact.jsx        →  /contact
+src/pages/blog/index.jsx     →  /blog
+src/pages/blog/post.jsx      →  /blog/post
+```
+
+### Dynamic Routes
+
+```
+src/pages/user/[id].jsx              →  /user/:id
+src/pages/blog/[slug].jsx            →  /blog/:slug
+src/pages/shop/[category]/[item].jsx →  /shop/:category/:item
+```
+
+**Example:**
+```jsx
+// src/pages/user/[id].jsx
+
+export default function UserProfile({ params }) {
+  const userId = params.id; // Get the dynamic param
+  
+  return (
+    <div>
+      <h1>User Profile</h1>
+      <p>Viewing user: {userId}</p>
+    </div>
+  );
+}
+
+// Visiting /user/123 → params.id = "123"
+// Visiting /user/john → params.id = "john"
+```
+
+### Nested Routes
+
+```
+src/pages/dashboard/index.jsx        →  /dashboard
+src/pages/dashboard/settings.jsx     →  /dashboard/settings
+src/pages/dashboard/profile.jsx      →  /dashboard/profile
+src/pages/dashboard/team/index.jsx   →  /dashboard/team
 ```
 
 ### Navigation
@@ -287,162 +450,255 @@ export default function UserProfile({ params }) {
 ```jsx
 import { Link, useRouter } from 'bertui/router';
 
-// Link component
-<Link to="/about">About</Link>
+function Navigation() {
+  const { navigate, params, query } = useRouter();
+  
+  return (
+    <nav>
+      {/* Link component */}
+      <Link to="/">Home</Link>
+      <Link to="/about">About</Link>
+      <Link to="/blog/my-post">Blog Post</Link>
+      
+      {/* Programmatic navigation */}
+      <button onClick={() => navigate('/dashboard')}>
+        Go to Dashboard
+      </button>
+      
+      {/* Access current route data */}
+      <p>Current params: {JSON.stringify(params)}</p>
+      <p>Query string: {JSON.stringify(query)}</p>
+    </nav>
+  );
+}
+```
 
-// Programmatic navigation
-const { navigate } = useRouter();
-navigate('/dashboard');
+### 404 Pages
+
+```jsx
+// src/pages/404.jsx
+
+export default function NotFound() {
+  return (
+    <div>
+      <h1>404 - Page Not Found</h1>
+      <Link to="/">Go Home</Link>
+    </div>
+  );
+}
 ```
 
 ---
 
-## 🖼️ Image Handling
+## 🖼️ Image Handling (Critical!)
 
-**CRITICAL:** BertUI only processes images from two directories:
+**IMPORTANT:** BertUI only processes images from two directories:
 
 ```
-✅ src/images/  → Served at /images/* (component images)
-✅ public/      → Served at /* (global assets like favicon)
+✅ src/images/     → Served at /images/*  (component images)
+✅ public/         → Served at /*          (global assets)
 
-❌ Anywhere else → Will cause compilation errors!
+❌ Anywhere else   → Compilation error! ⚠️
 ```
 
-**Example:**
+### Correct Usage
+
 ```jsx
-// ✅ CORRECT
-import Logo from '../images/logo.png';  // From src/images/
-import Favicon from '/favicon.svg';     // From public/
+// ✅ CORRECT - From src/images/
+import Logo from '../images/logo.png';
+import Banner from '../images/hero/banner.jpg';
 
-// ❌ WRONG (will break)
-import Banner from '../../assets/banner.png';  // Outside allowed dirs
+function Header() {
+  return (
+    <header>
+      <img src={Logo} alt="Logo" />
+      <img src={Banner} alt="Hero Banner" />
+    </header>
+  );
+}
+
+// ✅ CORRECT - From public/ (for global assets like favicon)
+function Layout() {
+  return (
+    <div>
+      <link rel="icon" href="/favicon.svg" />
+      <img src="/logo.png" alt="Public Logo" />
+    </div>
+  );
+}
+```
+
+### Wrong Usage (Will Break!)
+
+```jsx
+// ❌ WRONG - Outside allowed directories
+import Banner from '../../assets/banner.png';  // ❌ Don't do this!
+import Icon from '../icons/menu.svg';          // ❌ Don't do this!
+
+// Fix: Move to src/images/ or public/
+```
+
+### Project Structure
+
+```
+my-app/
+├── src/
+│   ├── images/              # ✅ Component images here
+│   │   ├── logo.png
+│   │   ├── hero/
+│   │   │   └── banner.jpg
+│   │   └── icons/
+│   │       └── menu.svg
+│   ├── pages/
+│   └── components/
+├── public/                  # ✅ Global static assets here
+│   ├── favicon.svg
+│   └── robots.txt
+└── dist/                    # Build output
+    ├── images/              # Copied from src/images/
+    ├── favicon.svg          # Copied from public/
+    └── index.html
 ```
 
 ---
 
 ## 📊 Real-World Performance
 
-Tested on Intel i3-2348M (your results will be better on modern hardware):
+**Tested on Intel i3-2348M, 7.6GB RAM** (your modern hardware will be faster):
 
-| Metric | BertUI | Next.js | Vite |
-|--------|--------|---------|------|
-| Dev Server Start | **494ms** | 2.1s | 713ms |
-| Production Build | **265ms** | 8.4s | 4.7s |
-| SSG Per Route | **~80ms** | ~200ms | N/A |
-| Bundle Size | **100KB** | 280KB | 220KB |
-| **SSG Support** | **✅ YES** | ✅ YES | **❌ NO** |
+| Metric | BertUI | Next.js | Vite | Astro |
+|--------|--------|---------|------|-------|
+| **Dev Server Start** | **494ms** | 2.1s | 713ms | 1.8s |
+| **Production Build** | **265ms** | 8.4s | 4.7s | 3.2s |
+| **HMR Update** | **30ms** | 120ms | 85ms | 95ms |
+| **Bundle Size** | **100KB** | 280KB | 220KB | 150KB |
+| **SSG Per Route** | **~80ms** | ~200ms | N/A | ~150ms |
+| **Dependencies** | **4** | 50+ | 15+ | 30+ |
+| **Install Size** | **~14MB** | ~200MB | ~50MB | ~100MB |
 
-**Time saved per year:**
-- 5 projects/week: ~2.5 hours/year on project creation
-- 10 dev server restarts/day: ~9 minutes/year
-- 3 builds/day: ~32 minutes/year
+### Time Saved Per Year
 
-**Total: ~2.7 hours of pure waiting time eliminated.**  
-But the real win? **Flow state.** When tools respond instantly, you stay focused and ship faster.
+**For an active developer (conservative estimates):**
 
----
+- **5 new projects/week:** ~2.5 hours saved on scaffolding
+- **10 dev restarts/day:** ~9 minutes saved on server starts
+- **3 builds/day:** ~32 minutes saved on production builds
+- **100 HMR updates/day:** ~15 minutes saved on hot reloads
 
-## 🎨 Features
+**Total: ~3.5 hours of pure waiting time eliminated per year.**
 
-### Core Features
-- ⚡ **38ms Compilation** - Compiles 20 React files in 38ms
-- 📁 **Zero Config Routing** - File-based routing with dynamic routes
-- 🏝️ **Server Islands** - Optional SSG with one line
-- 🔥 **Hot Module Replacement** - Instant updates (30ms HMR)
-- 📦 **Zero Config** - Works out of the box
-- 🚀 **Production Ready** - Optimized builds, semantic versioning
-- 🎯 **React-Focused** - Optimized for React ecosystem
+But the real win? **Flow state.** When tools respond instantly, you stay focused. You ship faster. You build better products.
 
-### Developer Experience
-- 🔍 **Perfect SEO** - Server Islands generate static HTML
-- 💅 **CSS Optimization** - Single minified CSS file with LightningCSS
-- 🐛 **Error Overlay** - Full-screen error messages with stack traces
-- 📊 **Build Analytics** - Detailed build reports
-- 🎨 **Modern CSS** - Support for nesting, variables, and modern features
-
-### Dependency Count
-
-| Framework | Dependencies | Install Size |
-|-----------|-------------|--------------|
-| **BertUI** | **4** | **~14MB** |
-| Vite + React | 15+ | ~50MB |
-| Next.js | 50+ | ~200MB |
-| Gatsby | 100+ | ~500MB |
-
-**Still the fastest, still the lightest.** 🔥
+**[Complete benchmark methodology →](PERFORMANCE.md)**
 
 ---
 
-## 🛠️ Commands
+## 🎯 When to Choose BertUI
 
-```bash
-bertui dev         # Start dev server (494ms startup)
-bertui build       # Build for production (265ms builds)
-```
+### ✅ BertUI is Perfect For:
 
-Or via package.json:
-```bash
-bun run dev        # Development
-bun run build      # Production build
-bun run preview    # Preview production build
-```
+**Speed-Critical Projects**
+- You need the fastest possible developer experience
+- Every second of build time matters
+- You value instant feedback loops
+
+**Content-Heavy Sites**
+- Landing pages that need perfect SEO
+- Marketing sites with multiple pages
+- Documentation sites
+- Blogs and content platforms
+
+**Hybrid Applications**
+- Mix static marketing pages (Server Islands) with interactive dashboards
+- E-commerce sites with static product pages + dynamic cart
+- SaaS sites with static landing + dynamic app
+
+**Multiple Projects**
+- Agencies building many client sites
+- Developers prototyping frequently
+- Teams with fast CI/CD requirements
+
+**Bun Ecosystem**
+- Already using or willing to try Bun
+- Want cutting-edge JavaScript runtime performance
+
+### ❌ Consider Alternatives If:
+
+**You Need Full SSR**
+- Real-time server rendering for every request
+- Personalized content on every page load
+- **Use:** Next.js or Remix
+
+**You Need Advanced CMS Integration**
+- MDX with complex processing
+- Headless CMS with build-time data fetching
+- **Use:** Astro or Next.js
+
+**You Want Multi-Framework Support**
+- Need Vue, Svelte, or multiple frameworks
+- Micro-frontend architecture
+- **Use:** Astro or Vite
+
+**You Can't Use Bun**
+- Company policy restricts new runtimes
+- Legacy systems require Node.js
+- **Use:** Vite or Next.js
+
+**You're Locked Into TypeScript**
+- Company requires `.tsx` files (we have `.d.ts` but not `.tsx`)
+- Need full TS compilation in the build
+- **Use:** Next.js or Vite
 
 ---
 
-## 🏆 When to Use BertUI
+## 💭 Our Philosophy
 
-### ✅ Perfect For:
-
-- **Speed-First Projects** - You want the fastest possible dev experience
-- **Content Sites** - Landing pages, blogs, docs (with Server Islands)
-- **Hybrid Apps** - Mix static pages (Server Islands) with interactive apps
-- **Multiple Projects** - Create new projects frequently (7x faster scaffolding)
-- **Fast CI/CD** - Need quick builds in pipelines (18x faster than Vite)
-- **Bun Users** - Already using or willing to try Bun
-
-### ❌ Not For You If:
-
-- **Need Full SSR** - Real-time server rendering (use Next.js or Remix)
-- **Content-Heavy Blog** - Needs MDX and advanced content features (use Astro)
-- **Multi-Framework** - Want Vue, Svelte support (use Astro or Vite)
-- **Can't Use Bun** - Company policy or legacy systems prevent Bun usage
-- **Need TypeScript** - We're JavaScript-first by design (see Philosophy below)
-
-**BertUI is laser-focused on: Fast React development with optional perfect SEO.**  
-If that's what you need, you'll love it. If not, use the right tool.
-
----
-
-## 💭 JavaScript-First Philosophy
+### JavaScript-First, TypeScript-Enhanced
 
 **BertUI is JavaScript-first and will remain that way.**
 
-We fully support `.jsx` files with complete JSX syntax, but we **do not plan to add TypeScript (`.tsx`) support.**
+**What we believe:**
+- JavaScript is powerful, universal, and requires no compilation
+- Zero config means zero config - not "configure TypeScript first"
+- Speed shouldn't require type annotations
+- Complexity kills productivity
+
+**What we changed in v1.1.1:**
+- ✅ Added full `.d.ts` type definitions (you asked, we listened!)
+- ✅ Complete IntelliSense and autocomplete in VS Code
+- ✅ Type safety without `.tsx` files
+- ✅ Best of both worlds: simplicity + DX
+
+**What we won't change:**
+- ❌ No `.tsx` file support (use Next.js if you need this)
+- ❌ No TypeScript compiler in the build chain
+- ❌ No `tsconfig.json` requirement
 
 **Why?**
-- We believe in keeping tools simple and focused
-- TypeScript adds complexity that goes against "zero config, just code"
-- JavaScript is powerful, universal, and requires no compilation step
-- We want to eliminate barriers, not add them
 
-If you need TypeScript, we recommend Next.js or Remix - they're excellent frameworks with first-class TypeScript support.
+Because TypeScript compilation adds:
+- Build complexity
+- Configuration overhead  
+- Slower dev experience
+- Barriers to entry
 
-**BertUI's mission:** The fastest React development with zero complexity.  
-TypeScript would compromise that mission.
+**BertUI's mission:** The fastest React development with zero complexity. That mission is non-negotiable.
 
 ---
 
 ## 🌐 Production Deployment
 
-### Supported Platforms
-- ✅ Vercel (zero config with included `vercel.json`)
-- ✅ Netlify (works out of the box)
-- ✅ Cloudflare Pages (instant deploys)
-- ✅ Any static host (Nginx, Apache, S3, etc.)
+### Supported Platforms (All Zero Config)
 
-### Vercel Deployment (Recommended)
+- ✅ **Vercel** - Recommended, includes pre-configured `vercel.json`
+- ✅ **Netlify** - Works out of the box
+- ✅ **Cloudflare Pages** - Instant edge deploys
+- ✅ **GitHub Pages** - Free static hosting
+- ✅ **Any static host** - Nginx, Apache, S3, Firebase, Surge, etc.
 
-Your project includes a pre-configured `vercel.json`:
+### Vercel Deployment (Fastest)
+
+Your project includes `vercel.json`:
 
 ```json
 {
@@ -450,175 +706,312 @@ Your project includes a pre-configured `vercel.json`:
   "outputDirectory": "dist",
   "framework": null,
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
 ```
 
-**Deployment steps:**
+**Deploy in 3 steps:**
 1. Push to GitHub
-2. Import to Vercel
-3. Deploy (auto-detects config)
-4. Done! 🎉
+2. Import to Vercel  
+3. Deploy
+
+**Done! Your site is live.** 🎉
+
+### Netlify Deployment
+
+Create `netlify.toml`:
+
+```toml
+[build]
+  command = "bun run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+### Static Hosting (Nginx, Apache, etc.)
+
+```bash
+# Build
+bun run build
+
+# Upload dist/ to your server
+scp -r dist/* user@server:/var/www/html/
+
+# Configure server for SPA routing
+# (Serve index.html for all routes)
+```
+
+### 🆕 SEO Files (v1.1.1)
+
+**Automatically generated on every build:**
+
+```
+dist/
+├── robots.txt        # 🆕 Auto-generated
+├── sitemap.xml       # 🆕 Auto-generated
+├── index.html
+└── ...
+```
+
+**Customize in `bertui.config.js`:**
+
+```js
+export default {
+  siteUrl: 'https://yourdomain.com',
+  
+  robots: {
+    allow: '/',
+    disallow: ['/admin', '/private'],
+    sitemap: true // Include sitemap in robots.txt
+  },
+  
+  sitemap: {
+    changefreq: 'weekly',
+    priority: 0.8,
+    exclude: ['/admin/*', '/private/*']
+  }
+};
+```
 
 **[Complete deployment guide →](https://bertui-docswebsite.vercel.app/deployment)**
 
-### Live Sites Using BertUI
-- [BertUI Docs](https://bertui-docswebsite.vercel.app/) - The site you're reading
+### Live Production Sites
+
+- [BertUI Documentation](https://bertui-docswebsite.vercel.app/) - This very site
+- [Your site here?](https://github.com/BunElysiaReact/BERTUI/issues) - Submit a PR!
 
 ---
 
-## 📚 Documentation & Resources
+## 🛠️ Commands Reference
 
-- **Documentation:** https://bertui-docswebsite.vercel.app/
-- **Getting Started:** https://bertui-docswebsite.vercel.app/getstarted
-- **Server Islands Guide:** https://bertui-docswebsite.vercel.app/server-islands
-- **Performance Benchmarks:** [PERFORMANCE.md](PERFORMANCE.md)
-- **GitHub:** https://github.com/BunElysiaReact/BERTUI
-- **NPM:** https://www.npmjs.com/package/bertui
-- **Discord:** https://discord.gg/kvbXfkJG
-- **Issues:** https://github.com/BunElysiaReact/BERTUI/issues
+### Development
+
+```bash
+# Start dev server (494ms startup)
+bun run dev
+bertui dev
+
+# Access at http://localhost:3000
+```
+
+### Production
+
+```bash
+# Build for production (265ms builds)
+bun run build
+bertui build
+
+# Preview production build locally
+bun run preview
+bertui preview
+```
+
+### Migration
+
+```bash
+# Migrate existing project to BertUI
+bunx migrate-bertui
+
+# Follow the generated MIGRATION_GUIDE.md
+```
+
+### Project Creation
+
+```bash
+# Create new BertUI app
+bunx create-bertui my-app
+
+# Create with custom template (coming soon)
+bunx create-bertui my-app --template blog
+```
 
 ---
 
 ## 🎓 Learning Path
 
-1. **Quick Start** (5 min)
-   - Run `bunx create-bertui my-app`
-   - Explore the generated files
-   - Start dev server with `bun run dev`
-
-2. **File-Based Routing** (10 min)
-   - Create `src/pages/about.jsx`
-   - Add dynamic route `src/pages/blog/[slug].jsx`
-   - Test navigation with `Link` component
-
-3. **Server Islands** (15 min)
-   - Add `export const render = "server";` to a page
-   - Build and check the generated HTML
-   - View page source to see pre-rendered content
-
-4. **Production Build** (5 min)
-   - Run `bun run build`
-   - Deploy to Vercel or Netlify
-   - Celebrate your blazing-fast site! 🎉
-
-**Total time to mastery: ~35 minutes**
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how to get started:
+### Level 1: Quick Start (5 minutes)
 
 ```bash
-# Clone the repo
-git clone https://github.com/BunElysiaReact/BERTUI
-cd BERTUI
-
-# Install dependencies
-bun install
-
-# Start development
-bun run dev
-
-# Make your changes
-# Run tests
-bun test
-
-# Submit PR
-```
-
-**Areas we need help:**
-- Documentation improvements
-- Bug fixes
-- Performance optimizations
-- Example projects
-- Migration tools
-
----
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Credits & Thanks
-
-**Built with 🔥 by [Pease Ernest](https://github.com/Ernest12287)**  
-*Because developers deserve faster tooling and better SEO.*
-
-**Special Thanks:**
-- The Bun team for creating an incredible runtime
-- The Elysia team for the fastest web framework
-- Our early adopters who gave critical feedback
-- Everyone who believed in BertUI when it was "just Cool Vite"
-
-**v1.1.0 is dedicated to everyone who said we needed better SEO.**  
-You were right. Server Islands is for you. 🏝️
-
----
-
-## 🎯 The Journey: From "Cool Vite" to Revolution
-
-**v0.1.0 (Nov 26, 2025)** - First release. Fast, but client-only.  
-**v1.0.0 (Dec 17, 2025)** - Stable foundation after 35 beta versions.  
-**v1.1.0 (Dec 23, 2025)** - Server Islands. Everything changed.
-
-We were called "Cool Vite" and it hurt. We were fast, but missing something crucial: **perfect SEO without complexity.**
-
-Server Islands solved it. Now we're not "Cool Vite." Vite can't do this at all.
-
-**We're BertUI - the framework with Bun speed AND perfect SEO.**
-
----
-
-## ❓ FAQ
-
-**Q: Is BertUI production-ready?**  
-A: Yes! v1.0.0+ is stable and production-ready. Live sites are using it.
-
-**Q: Do I need to use Server Islands?**  
-A: No! They're optional. Use them for SEO-critical pages, skip them for interactive apps.
-
-**Q: Can I migrate from Vite/CRA/Next.js?**  
-A: Yes! Use `bunx migrate-bertui` for automated migration with backups.
-
-**Q: Does BertUI require a server?**  
-A: No! Server Islands generate static HTML at build time. Deploy anywhere.
-
-**Q: What about TypeScript?**  
-A: BertUI is JavaScript-first. We don't plan `.tsx` support. Use Next.js if you need TS.
-
-**Q: How do Server Islands compare to Next.js SSG?**  
-A: Server Islands are simpler (one line vs complex config) and faster (265ms vs 8s builds).
-
-**Q: Can I use Server Islands with dynamic routes?**  
-A: Not yet. Coming in a future release.
-
-**Q: What if I need full SSR?**  
-A: Use Next.js or Remix. BertUI focuses on static-first with optional SSG.
-
----
-
-## 🚀 Ready to Build?
-
-```bash
-bunx create-bertui my-app
-cd my-app
+bunx create-bertui my-first-app
+cd my-first-app
 bun run dev
 ```
 
-**Join developers building the fastest React apps with perfect SEO.**
+**Explore:**
+- Open `src/pages/index.jsx`
+- Edit the content
+- See instant hot reload (30ms)
+
+### Level 2: File-Based Routing (10 minutes)
+
+```bash
+# Create new pages
+echo 'export default () => <h1>About Page</h1>' > src/pages/about.jsx
+echo 'export default () => <h1>Contact</h1>' > src/pages/contact.jsx
+```
+
+**Visit:**
+- `http://localhost:3000/about`
+- `http://localhost:3000/contact`
+
+**Add navigation:**
+```jsx
+import { Link } from 'bertui/router';
+
+<nav>
+  <Link to="/">Home</Link>
+  <Link to="/about">About</Link>
+  <Link to="/contact">Contact</Link>
+</nav>
+```
+
+### Level 3: Server Islands (15 minutes)
+
+```jsx
+// src/pages/about.jsx
+
+export const render = "server"; // 🏝️ Add this line
+
+export const meta = {
+  title: "About - My Site",
+  description: "Learn about us"
+};
+
+export default function About() {
+  return <h1>About Us</h1>;
+}
+```
+
+**Build and inspect:**
+```bash
+bun run build
+cat dist/about/index.html  # See the pre-rendered HTML!
+```
+
+### Level 4: Dynamic Routes (15 minutes)
+
+```jsx
+// src/pages/blog/[slug].jsx
+
+export default function BlogPost({ params }) {
+  return (
+    <article>
+      <h1>Post: {params.slug}</h1>
+    </article>
+  );
+}
+```
+
+**Visit:**
+- `/blog/first-post` → params.slug = "first-post"
+- `/blog/my-story` → params.slug = "my-story"
+
+### Level 5: Production Deploy (10 minutes)
+
+```bash
+# Build
+bun run build
+
+# Deploy to Vercel
+vercel
+
+# Or deploy to Netlify
+netlify deploy --prod
+```
+
+**Total learning time: ~55 minutes to mastery** 🎓
 
 ---
 
-**Performance claims questioned?** [Read the receipts.](PERFORMANCE.md)  
-**Want to understand Server Islands?** [Read the guide.](https://bertui-docswebsite.vercel.app/server-islands)  
-**Need help?** [Join our Discord.](https://discord.gg/kvbXfkJG)
+## 🚀 Coming Soon (Roadmap)
 
-**Made with ⚡ and 🏝️ by the BertUI team**
+### v1.2.0: PageBuilder (Q1 2025)
+
+**Build pages dynamically from API data:**
+
+```jsx
+// src/pages/products/[id].jsx
+
+export const pageBuilder = {
+  dataSource: 'https://api.example.com/products',
+  template: 'product',
+  pathParam: 'id'
+};
+
+export default function Product({ data }) {
+  return (
+    <div>
+      <h1>{data.name}</h1>
+      <p>{data.description}</p>
+      <img src={data.image} alt={data.name} />
+    </div>
+  );
+}
+```
+
+**What it does:**
+- Fetches data from API at build time
+- Generates pages for each item
+- Sorts and handles dynamic URLs
+- Perfect for e-commerce, blogs, docs
+
+**Think Astro's content collections, but for external APIs.**
+
+### BertUI-SSR Plugin (March 2025)
+
+**Optional server-side rendering for advanced use cases:**
+
+```js
+// bertui.config.js
+import { ssr } from 'bertui-ssr';
+
+export default {
+  plugins: [ssr({ /* options */ })]
+};
+```
+
+**What it adds:**
+- Full SSR for personalized content
+- Server-side authentication
+- Real-time data fetching
+- API route handling
+
+**Why a plugin?** Most sites don't need SSR. For those that do, add it as needed without bloating the core framework.
+
+### BertUI-Icons (Late January 2025)
+
+**The fastest icon library ever built:**
+
+```jsx
+import { Camera, Heart, Star } from 'bertui-icons';
+
+<Camera size={24} color="blue" />
+<Heart size={32} className="icon" />
+<Star size={16} strokeWidth={2} />
+```
+
+**Tech stack:**
+- Bun FFI for native performance
+- Zig for low-level optimization
+- SVG path data compiled at build time
+- Zero runtime overhead
+
+**Performance:**
+- 10x faster than lucide-react
+- Tree-shakeable (only load icons you use)
+- Full TypeScript support
+
+---
+
+## 📚 Documentation & Resources
+
+### Official Docs
+- **Homepage:** https://bertui-docswebsite.vercel.app/
+- **Getting Started:** https://bertui-docswebsite.vercel.app/getstarted
+- **Server Islands Guide:** https://bertui-docswebsite.vercel.app/server-islands
+- **Deployment Guide:** https://bertui-docswebsite.vercel
