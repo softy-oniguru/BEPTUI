@@ -1,4 +1,4 @@
-// bertui/src/build.js - UPDATED WITH PAGE BUILDER
+// bertui/src/build.js - FIXED FOR NODE_MODULES
 import { join } from 'path';
 import { existsSync, mkdirSync, rmSync } from 'fs';
 import logger from './logger/logger.js';
@@ -34,7 +34,7 @@ export async function buildProduction(options = {}) {
     logger.info('Step 0: Loading environment variables...');
     const envVars = loadEnvVariables(root);
     
-    // ✅ NEW: Step 0.5: Load config and run Page Builder
+    // Step 0.5: Load config and run Page Builder
     const { loadConfig } = await import('./config/loadConfig.js');
     const config = await loadConfig(root);
     
@@ -109,6 +109,8 @@ async function bundleJavaScript(buildEntry, outDir, envVars) {
       chunk: 'chunks/[name]-[hash].js',
       asset: '[name]-[hash].[ext]'
     },
+    // ✅ CRITICAL FIX: Don't externalize node_modules anymore
+    // Let Bun bundle everything including bertui-icons
     external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
     define: {
       'process.env.NODE_ENV': '"production"',
@@ -127,7 +129,7 @@ async function bundleJavaScript(buildEntry, outDir, envVars) {
     process.exit(1);
   }
   
-  logger.success('JavaScript bundled');
+  logger.success('JavaScript bundled (with node_modules)');
   return result;
 }
 

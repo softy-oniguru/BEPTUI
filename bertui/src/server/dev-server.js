@@ -1,4 +1,4 @@
-// src/server/dev-server.js - FIXED IMAGE SERVING
+// src/server/dev-server.js - FIXED IMAGE SERVING, ADDED NODE_MODULES, FIXED MIME TYPES
 import { Elysia } from 'elysia';
 import { watch } from 'fs';
 import { join, extname } from 'path';
@@ -81,6 +81,28 @@ export async function startDevServer(options = {}) {
       const ext = extname(filepath).toLowerCase();
       const contentType = getContentType(ext);
       
+      return new Response(file, {
+        headers: { 
+          'Content-Type': contentType,
+          'Cache-Control': 'no-cache'
+        }
+      });
+    })
+    
+    // ✅ FIXED: Serve node_modules with correct MIME type
+    .get('/node_modules/*', async ({ params, set }) => {
+      const filepath = join(root, 'node_modules', params['*']);
+      const file = Bun.file(filepath);
+      
+      if (!await file.exists()) {
+        set.status = 404;
+        return 'Module not found';
+      }
+      
+      const ext = extname(filepath).toLowerCase();
+      const contentType = ext === '.js' ? 'application/javascript; charset=utf-8' : getContentType(ext);
+      
+      // CRITICAL: Return Response with headers
       return new Response(file, {
         headers: { 
           'Content-Type': contentType,
@@ -405,6 +427,7 @@ ws.onclose = () => {
       }
     })
     
+    // ✅ UPDATED /compiled/* ROUTE
     .get('/compiled/*', async ({ params, set }) => {
       const filepath = join(compiledDir, params['*']);
       const file = Bun.file(filepath);
@@ -414,10 +437,10 @@ ws.onclose = () => {
         return 'File not found';
       }
       
-      const ext = extname(filepath);
-      const contentType = ext === '.js' ? 'application/javascript' : getContentType(ext);
+      const ext = extname(filepath).toLowerCase();
+      const contentType = ext === '.js' ? 'application/javascript; charset=utf-8' : getContentType(ext);
       
-      return new Response(await file.text(), {
+      return new Response(file, {
         headers: { 
           'Content-Type': contentType,
           'Cache-Control': 'no-store'
@@ -449,10 +472,12 @@ ws.onclose = () => {
     process.exit(1);
   }
   
+  // LOGGING (Unchanged from previous update)
   logger.success(`🚀 Server running at http://localhost:${port}`);
   logger.info(`📁 Serving: ${root}`);
   logger.info(`🖼️  Images: /images/* → src/images/`);
   logger.info(`📦 Public: /public/* → public/`);
+  logger.info(`📚 Modules: /node_modules/* → node_modules/`);
   
   setupWatcher(root, compiledDir, clients, async () => {
     hasRouter = existsSync(join(compiledDir, 'router.js'));
@@ -501,7 +526,8 @@ ${userStylesheets}
     "imports": {
       "react": "https://esm.sh/react@18.2.0",
       "react-dom": "https://esm.sh/react-dom@18.2.0",
-      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+      "bertui-icons": "/node_modules/bertui-icons/dist/index.js"
     }
   }
   </script>
