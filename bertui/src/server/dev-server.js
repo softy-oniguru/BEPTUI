@@ -28,7 +28,7 @@ export async function startDevServer(options = {}) {
   
   const app = new Elysia()
     .get('/', async () => {
-      return serveHTML(root, hasRouter, config);
+      return await serveHTML(root, hasRouter, config); // ✅ FIX 1/3: Added await
     })
     
     // ✅ Serve images from src/images/
@@ -149,7 +149,7 @@ export async function startDevServer(options = {}) {
         return 'File not found';
       }
       
-      return serveHTML(root, hasRouter, config);
+      return await serveHTML(root, hasRouter, config); // ✅ FIX 2/3: Added await
     })
     
     .get('/hmr-client.js', () => {
@@ -426,26 +426,43 @@ ws.onclose = () => {
       }
     })
     
-    .get('/compiled/*', async ({ params, set }) => {
-      const filepath = join(compiledDir, params['*']);
-      const file = Bun.file(filepath);
-      
-      if (!await file.exists()) {
-        set.status = 404;
-        return 'File not found';
-      }
-      
-      const ext = extname(filepath).toLowerCase();
-      const contentType = ext === '.js' ? 'application/javascript; charset=utf-8' : getContentType(ext);
-      
-      return new Response(file, {
-        headers: { 
-          'Content-Type': contentType,
-          'Cache-Control': 'no-store'
-        }
-      });
-    })
-    
+// Replace the /compiled/* handler in bertui/src/server/dev-server.js
+
+.get('/compiled/*', async ({ params, set }) => {
+  const requestedPath = params['*'];
+  const filepath = join(compiledDir, requestedPath);
+  
+  // Check if file exists
+  const file = Bun.file(filepath);
+  if (!await file.exists()) {
+    logger.warn(`File not found: /compiled/${requestedPath}`);
+    set.status = 404;
+    return 'File not found';
+  }
+  
+  // CRITICAL FIX: Always return JavaScript files with correct MIME type
+  const ext = extname(filepath).toLowerCase();
+  
+  let contentType;
+  if (ext === '.js' || ext === '.jsx' || ext === '.mjs') {
+    contentType = 'application/javascript; charset=utf-8';
+  } else if (ext === '.json') {
+    contentType = 'application/json; charset=utf-8';
+  } else if (ext === '.css') {
+    contentType = 'text/css; charset=utf-8';
+  } else {
+    contentType = 'text/plain; charset=utf-8';
+  }
+  
+  logger.debug(`Serving: /compiled/${requestedPath} (${contentType})`);
+  
+  return new Response(file, {
+    headers: { 
+      'Content-Type': contentType,
+      'Cache-Control': 'no-store, no-cache, must-revalidate'
+    }
+  });
+})
     .get('/styles/*', async ({ params, set }) => {
       const filepath = join(stylesDir, params['*']);
       const file = Bun.file(filepath);
@@ -482,8 +499,10 @@ ws.onclose = () => {
   
   return app;
 }
+// Update serveHTML function in bertui/src/server/dev-server.js
+// This version auto-detects ALL bertui-* packages
 
-function serveHTML(root, hasRouter, config) {
+async function serveHTML(root, hasRouter, config) { // ✅ FIX 3/3: Added async
   const meta = config.meta || {};
   
   const srcStylesDir = join(root, 'src', 'styles');
@@ -498,10 +517,71 @@ function serveHTML(root, hasRouter, config) {
     }
   }
   
-  // ✅ CRITICAL FIX: Add bertui-icons to import map
-  const bertuiIconsPath = existsSync(join(root, 'node_modules', 'bertui-icons'))
-    ? '"/node_modules/bertui-icons/generated/index.js"'
-    : null;
+  // Build import map
+  const importMap = {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
+  };
+  
+  // ✅ AUTO-DETECT ALL bertui-* PACKAGES
+  const nodeModulesDir = join(root, 'node_modules');
+  
+  if (existsSync(nodeModulesDir)) {
+    try {
+      const packages = readdirSync(nodeModulesDir);
+      
+      for (const pkg of packages) {
+        // Skip non-bertui packages
+        if (!pkg.startsWith('bertui-')) continue;
+        
+        const pkgDir = join(nodeModulesDir, pkg);
+        const pkgJsonPath = join(pkgDir, 'package.json');
+        
+        // Skip if no package.json
+        if (!existsSync(pkgJsonPath)) continue;
+        
+        try {
+          const pkgJsonContent = await Bun.file(pkgJsonPath).text();
+          const pkgJson = JSON.parse(pkgJsonContent);
+          
+          // Resolve main entry point
+          let mainFile = null;
+          
+          // Try exports field first (modern)
+          if (pkgJson.exports) {
+            const rootExport = pkgJson.exports['.'];
+            if (typeof rootExport === 'string') {
+              mainFile = rootExport;
+            } else if (typeof rootExport === 'object') {
+              // Prefer browser build, fallback to default
+              mainFile = rootExport.browser || rootExport.default || rootExport.import;
+            }
+          }
+          
+          // Fallback to main field
+          if (!mainFile) {
+            mainFile = pkgJson.main || 'index.js';
+          }
+          
+          // Verify file exists
+          const fullPath = join(pkgDir, mainFile);
+          if (existsSync(fullPath)) {
+            importMap[pkg] = `/node_modules/${pkg}/${mainFile}`;
+            logger.info(`✅ ${pkg} available`);
+          } else {
+            logger.warn(`⚠️  ${pkg} main file not found: ${mainFile}`);
+          }
+          
+        } catch (error) {
+          logger.warn(`⚠️  Failed to parse ${pkg}/package.json: ${error.message}`);
+        }
+      }
+      
+    } catch (error) {
+      logger.warn(`Failed to scan node_modules: ${error.message}`);
+    }
+  }
   
   const html = `<!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
@@ -524,14 +604,7 @@ function serveHTML(root, hasRouter, config) {
 ${userStylesheets}
   
   <script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@18.2.0",
-      "react-dom": "https://esm.sh/react-dom@18.2.0",
-      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"${bertuiIconsPath ? `,
-      "bertui-icons": ${bertuiIconsPath}` : ''}
-    }
-  }
+  ${JSON.stringify({ imports: importMap }, null, 2)}
   </script>
   
   <style>
@@ -557,7 +630,6 @@ ${userStylesheets}
     headers: { 'Content-Type': 'text/html' }
   });
 }
-
 function getImageContentType(ext) {
   const types = {
     '.jpg': 'image/jpeg',
