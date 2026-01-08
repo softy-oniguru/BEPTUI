@@ -1,3 +1,4 @@
+// bertui/src/client/compiler.js - FIXED NODE_MODULES IMPORTS
 import { existsSync, mkdirSync, readdirSync, statSync } from 'fs';
 import { join, extname, relative, dirname } from 'path';
 import logger from '../logger/logger.js';
@@ -73,12 +74,10 @@ async function discoverRoutes(pagesDir) {
         await scanDirectory(fullPath, relativePath);
       } else if (entry.isFile()) {
         const ext = extname(entry.name);
-        
         if (ext === '.css') continue;
         
         if (['.jsx', '.tsx', '.js', '.ts'].includes(ext)) {
           const fileName = entry.name.replace(ext, '');
-          
           let route = '/' + relativePath.replace(/\\/g, '/').replace(ext, '');
           
           if (fileName === 'index') {
@@ -100,7 +99,6 @@ async function discoverRoutes(pagesDir) {
   }
   
   await scanDirectory(pagesDir);
-  
   routes.sort((a, b) => {
     if (a.type === b.type) {
       return a.route.localeCompare(b.route);
@@ -141,11 +139,7 @@ export function Router({ routes }) {
 
   useEffect(() => {
     matchAndSetRoute(window.location.pathname);
-
-    const handlePopState = () => {
-      matchAndSetRoute(window.location.pathname);
-    };
-
+    const handlePopState = () => matchAndSetRoute(window.location.pathname);
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [routes]);
@@ -158,27 +152,21 @@ export function Router({ routes }) {
         return;
       }
     }
-
     for (const route of routes) {
       if (route.type === 'dynamic') {
         const pattern = route.path.replace(/\\[([^\\]]+)\\]/g, '([^/]+)');
         const regex = new RegExp('^' + pattern + '$');
         const match = pathname.match(regex);
-
         if (match) {
           const paramNames = [...route.path.matchAll(/\\[([^\\]]+)\\]/g)].map(m => m[1]);
           const extractedParams = {};
-          paramNames.forEach((name, i) => {
-            extractedParams[name] = match[i + 1];
-          });
-
+          paramNames.forEach((name, i) => { extractedParams[name] = match[i + 1]; });
           setCurrentRoute(route);
           setParams(extractedParams);
           return;
         }
       }
     }
-
     setCurrentRoute(null);
     setParams({});
   }
@@ -188,31 +176,21 @@ export function Router({ routes }) {
     matchAndSetRoute(path);
   }
 
-  const routerValue = {
-    currentRoute,
-    params,
-    navigate,
-    pathname: window.location.pathname
-  };
-
   const Component = currentRoute?.component;
-
   return React.createElement(
     RouterContext.Provider,
-    { value: routerValue },
-    Component ? React.createElement(Component, { params }) : React.createElement(NotFound, null)
+    { value: { currentRoute, params, navigate, pathname: window.location.pathname } },
+    Component ? React.createElement(Component, { params }) : React.createElement(NotFound)
   );
 }
 
 export function Link({ to, children, ...props }) {
   const { navigate } = useRouter();
-
-  function handleClick(e) {
-    e.preventDefault();
-    navigate(to);
-  }
-
-  return React.createElement('a', { href: to, onClick: handleClick, ...props }, children);
+  return React.createElement('a', { 
+    href: to, 
+    onClick: (e) => { e.preventDefault(); navigate(to); }, 
+    ...props 
+  }, children);
 }
 
 function NotFound() {
@@ -250,7 +228,6 @@ ${routeConfigs}
 
 async function compileDirectory(srcDir, outDir, root, envVars) {
   const stats = { files: 0, skipped: 0 };
-  
   const files = readdirSync(srcDir);
   
   for (const file of files) {
@@ -287,7 +264,6 @@ async function compileDirectory(srcDir, outDir, root, envVars) {
         code = replaceEnvInCode(code, envVars);
         code = fixRouterImports(code, outPath, root);
         
-        // ✅ CRITICAL FIX: Ensure React import for .js files with JSX
         if (usesJSX(code) && !code.includes('import React')) {
           code = `import React from 'react';\n${code}`;
         }
@@ -331,11 +307,11 @@ async function compileFile(srcPath, outDir, filename, relativePath, root, envVar
     });
     let compiled = await transpiler.transform(code);
     
-    // ✅ CRITICAL FIX: Always add React import if JSX is present
     if (usesJSX(compiled) && !compiled.includes('import React')) {
       compiled = `import React from 'react';\n${compiled}`;
     }
     
+    // ✅ CRITICAL FIX: Don't touch node_modules imports
     compiled = fixRelativeImports(compiled);
     
     await Bun.write(outPath, compiled);
@@ -346,13 +322,12 @@ async function compileFile(srcPath, outDir, filename, relativePath, root, envVar
   }
 }
 
-// ✅ NEW: Detect if code uses JSX
 function usesJSX(code) {
   return code.includes('React.createElement') || 
          code.includes('React.Fragment') ||
-         /<[A-Z]/.test(code) || // Detects JSX tags like <Component>
-         code.includes('jsx(') || // Runtime JSX
-         code.includes('jsxs('); // Runtime JSX
+         /<[A-Z]/.test(code) ||
+         code.includes('jsx(') ||
+         code.includes('jsxs(');
 }
 
 function removeCSSImports(code) {
@@ -384,13 +359,19 @@ function fixRouterImports(code, outPath, root) {
 }
 
 function fixRelativeImports(code) {
-  const importRegex = /from\s+['"](\.\.[\/\\]|\.\/)((?:[^'"]+?)(?<!\.js|\.jsx|\.ts|\.tsx|\.json))['"];?/g;
+  // ✅ CRITICAL FIX: Only fix relative imports, NOT bare specifiers like 'bertui-icons'
+  // Regex explanation:
+  // - Match: from './file' or from '../file'
+  // - DON'T match: from 'bertui-icons' or from 'react'
   
-  code = code.replace(importRegex, (match, prefix, path) => {
+  const importRegex = /from\s+['"](\.\.?\/[^'"]+?)(?<!\.js|\.jsx|\.ts|\.tsx|\.json)['"]/g;
+  
+  code = code.replace(importRegex, (match, path) => {
+    // Don't add .js if path already has an extension or ends with /
     if (path.endsWith('/') || /\.\w+$/.test(path)) {
       return match;
     }
-    return `from '${prefix}${path}.js';`;
+    return `from '${path}.js'`;
   });
   
   return code;

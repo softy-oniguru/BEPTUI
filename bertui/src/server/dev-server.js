@@ -1,4 +1,4 @@
-// src/server/dev-server.js - FIXED IMAGE SERVING, ADDED NODE_MODULES, FIXED MIME TYPES
+// src/server/dev-server.js - FIXED: bertui-icons Support + Import Map
 import { Elysia } from 'elysia';
 import { watch } from 'fs';
 import { join, extname } from 'path';
@@ -31,7 +31,7 @@ export async function startDevServer(options = {}) {
       return serveHTML(root, hasRouter, config);
     })
     
-    // ✅ FIX: Serve images from src/images/ (CRITICAL)
+    // ✅ Serve images from src/images/
     .get('/images/*', async ({ params, set }) => {
       const srcImagesDir = join(srcDir, 'images');
       const filepath = join(srcImagesDir, params['*']);
@@ -48,7 +48,7 @@ export async function startDevServer(options = {}) {
       return new Response(file, {
         headers: { 
           'Content-Type': contentType,
-          'Cache-Control': 'no-cache' // Dev server = no cache
+          'Cache-Control': 'no-cache'
         }
       });
     })
@@ -89,7 +89,7 @@ export async function startDevServer(options = {}) {
       });
     })
     
-    // ✅ FIXED: Serve node_modules with correct MIME type
+    // ✅ CRITICAL FIX: Serve node_modules with correct MIME type
     .get('/node_modules/*', async ({ params, set }) => {
       const filepath = join(root, 'node_modules', params['*']);
       const file = Bun.file(filepath);
@@ -102,7 +102,6 @@ export async function startDevServer(options = {}) {
       const ext = extname(filepath).toLowerCase();
       const contentType = ext === '.js' ? 'application/javascript; charset=utf-8' : getContentType(ext);
       
-      // CRITICAL: Return Response with headers
       return new Response(file, {
         headers: { 
           'Content-Type': contentType,
@@ -427,7 +426,6 @@ ws.onclose = () => {
       }
     })
     
-    // ✅ UPDATED /compiled/* ROUTE
     .get('/compiled/*', async ({ params, set }) => {
       const filepath = join(compiledDir, params['*']);
       const file = Bun.file(filepath);
@@ -472,12 +470,11 @@ ws.onclose = () => {
     process.exit(1);
   }
   
-  // LOGGING (Unchanged from previous update)
   logger.success(`🚀 Server running at http://localhost:${port}`);
   logger.info(`📁 Serving: ${root}`);
   logger.info(`🖼️  Images: /images/* → src/images/`);
   logger.info(`📦 Public: /public/* → public/`);
-  logger.info(`📚 Modules: /node_modules/* → node_modules/`);
+  logger.info(`⚡ BertUI Packages: /node_modules/* → node_modules/`);
   
   setupWatcher(root, compiledDir, clients, async () => {
     hasRouter = existsSync(join(compiledDir, 'router.js'));
@@ -500,6 +497,11 @@ function serveHTML(root, hasRouter, config) {
       logger.warn(`Could not read styles directory: ${error.message}`);
     }
   }
+  
+  // ✅ CRITICAL FIX: Add bertui-icons to import map
+  const bertuiIconsPath = existsSync(join(root, 'node_modules', 'bertui-icons'))
+    ? '"/node_modules/bertui-icons/generated/index.js"'
+    : null;
   
   const html = `<!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
@@ -526,8 +528,8 @@ ${userStylesheets}
     "imports": {
       "react": "https://esm.sh/react@18.2.0",
       "react-dom": "https://esm.sh/react-dom@18.2.0",
-      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-      "bertui-icons": "/node_modules/bertui-icons/dist/index.js"
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"${bertuiIconsPath ? `,
+      "bertui-icons": ${bertuiIconsPath}` : ''}
     }
   }
   </script>
@@ -618,7 +620,6 @@ function setupWatcher(root, compiledDir, clients, onRecompile) {
     if (watchedExtensions.includes(ext)) {
       logger.info(`📝 File changed: ${filename}`);
       
-      // For images, just reload
       if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif'].includes(ext)) {
         for (const client of clients) {
           try {
@@ -630,7 +631,6 @@ function setupWatcher(root, compiledDir, clients, onRecompile) {
         return;
       }
       
-      // For code/CSS, recompile
       for (const client of clients) {
         try {
           client.send(JSON.stringify({ type: 'recompiling' }));

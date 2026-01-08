@@ -1,6 +1,6 @@
-// bertui/src/build/generators/html-generator.js
+// bertui/src/build/generators/html-generator.js - FIXED PRODUCTION IMPORT MAP
 import { join, relative } from 'path';
-import { mkdirSync } from 'fs';
+import { mkdirSync, existsSync, cpSync } from 'fs';
 import logger from '../../logger/logger.js';
 import { extractMetaFromSource } from '../../utils/meta-extractor.js';
 
@@ -17,6 +17,9 @@ export async function generateProductionHTML(root, outDir, buildResult, routes, 
   const bundlePath = relative(outDir, mainBundle.path).replace(/\\/g, '/');
   const defaultMeta = config.meta || {};
   
+  // ✅ FIX: Check if bertui-icons is installed and copy to dist/
+  const bertuiIconsInstalled = await copyBertuiIconsToProduction(root, outDir);
+  
   logger.info(`📄 Generating HTML for ${routes.length} routes...`);
   
   // Process in batches to avoid Bun crashes
@@ -28,14 +31,39 @@ export async function generateProductionHTML(root, outDir, buildResult, routes, 
     
     // Process batch sequentially
     for (const route of batch) {
-      await processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir);
+      await processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir, bertuiIconsInstalled);
     }
   }
   
   logger.success(`✅ HTML generation complete for ${routes.length} routes`);
 }
 
-async function processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir) {
+// ✅ NEW: Copy bertui-icons to dist/ for production
+async function copyBertuiIconsToProduction(root, outDir) {
+  const nodeModulesDir = join(root, 'node_modules');
+  const bertuiIconsSource = join(nodeModulesDir, 'bertui-icons');
+  
+  if (!existsSync(bertuiIconsSource)) {
+    logger.debug('bertui-icons not installed, skipping...');
+    return false;
+  }
+  
+  try {
+    const bertuiIconsDest = join(outDir, 'node_modules', 'bertui-icons');
+    mkdirSync(join(outDir, 'node_modules'), { recursive: true });
+    
+    // Copy the entire bertui-icons package
+    cpSync(bertuiIconsSource, bertuiIconsDest, { recursive: true });
+    
+    logger.success('✅ Copied bertui-icons to dist/node_modules/');
+    return true;
+  } catch (error) {
+    logger.error(`Failed to copy bertui-icons: ${error.message}`);
+    return false;
+  }
+}
+
+async function processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir, bertuiIconsInstalled) {
   try {
     const sourceCode = await Bun.file(route.path).text();
     const pageMeta = extractMetaFromSource(sourceCode);
@@ -56,7 +84,7 @@ async function processSingleRoute(route, serverIslands, config, defaultMeta, bun
       }
     }
     
-    const html = generateHTML(meta, route, bundlePath, staticHTML, isServerIsland);
+    const html = generateHTML(meta, route, bundlePath, staticHTML, isServerIsland, bertuiIconsInstalled);
     
     let htmlPath;
     if (route.route === '/') {
@@ -211,7 +239,8 @@ async function extractStaticHTMLFromComponent(sourceCode, filePath) {
   }
 }
 
-function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland = false) {
+// ✅ FIXED: Add bertuiIconsInstalled parameter
+function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland = false, bertuiIconsInstalled = false) {
   const rootContent = staticHTML 
     ? `<div id="root">${staticHTML}</div>` 
     : '<div id="root"></div>';
@@ -219,6 +248,11 @@ function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland =
   const comment = isServerIsland 
     ? '<!-- 🏝️ Server Island: Static content rendered at build time -->'
     : '<!-- ⚡ Client-only: Content rendered by JavaScript -->';
+  
+  // ✅ FIX: Add bertui-icons to production import map if installed
+  const bertuiIconsImport = bertuiIconsInstalled 
+    ? ',\n      "bertui-icons": "/node_modules/bertui-icons/generated/index.js"'
+    : '';
   
   return `<!DOCTYPE html>
 <html lang="${meta.lang || 'en'}">
@@ -245,7 +279,7 @@ function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland =
       "react": "https://esm.sh/react@18.2.0",
       "react-dom": "https://esm.sh/react-dom@18.2.0",
       "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-      "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime"
+      "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime"${bertuiIconsImport}
     }
   }
   </script>

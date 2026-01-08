@@ -1,4 +1,4 @@
-// bertui/src/build.js - FIXED FOR NODE_MODULES
+// bertui/src/build.js - FIXED BUNDLING
 import { join } from 'path';
 import { existsSync, mkdirSync, rmSync } from 'fs';
 import logger from './logger/logger.js';
@@ -67,6 +67,14 @@ export async function buildProduction(options = {}) {
     // Step 4: JavaScript Bundling
     logger.info('Step 4: Bundling JavaScript...');
     const buildEntry = join(buildDir, 'main.js');
+    
+    // ✅ CRITICAL FIX: Check if main.js exists before bundling
+    if (!existsSync(buildEntry)) {
+      logger.error('❌ main.js not found in build directory!');
+      logger.error('   Expected: ' + buildEntry);
+      throw new Error('Build entry point missing. Compilation may have failed.');
+    }
+    
     const result = await bundleJavaScript(buildEntry, outDir, envVars);
     
     // Step 5: HTML Generation
@@ -97,40 +105,66 @@ export async function buildProduction(options = {}) {
 }
 
 async function bundleJavaScript(buildEntry, outDir, envVars) {
-  const result = await Bun.build({
-    entrypoints: [buildEntry],
-    outdir: join(outDir, 'assets'),
-    target: 'browser',
-    minify: true,
-    splitting: true,
-    sourcemap: 'external',
-    naming: {
-      entry: '[name]-[hash].js',
-      chunk: 'chunks/[name]-[hash].js',
-      asset: '[name]-[hash].[ext]'
-    },
-    // ✅ CRITICAL FIX: Don't externalize node_modules anymore
-    // Let Bun bundle everything including bertui-icons
-    external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
-    define: {
-      'process.env.NODE_ENV': '"production"',
-      ...Object.fromEntries(
-        Object.entries(envVars).map(([key, value]) => [
-          `process.env.${key}`,
-          JSON.stringify(value)
-        ])
-      )
+  try {
+    // ✅ CRITICAL FIX: Better error handling and clearer external configuration
+    const result = await Bun.build({
+      entrypoints: [buildEntry],
+      outdir: join(outDir, 'assets'),
+      target: 'browser',
+      minify: true,
+      splitting: true,
+      sourcemap: 'external',
+      naming: {
+        entry: '[name]-[hash].js',
+        chunk: 'chunks/[name]-[hash].js',
+        asset: '[name]-[hash].[ext]'
+      },
+      // ✅ FIXED: Externalize React to use CDN (reduces bundle size)
+      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
+      define: {
+        'process.env.NODE_ENV': '"production"',
+        ...Object.fromEntries(
+          Object.entries(envVars).map(([key, value]) => [
+            `process.env.${key}`,
+            JSON.stringify(value)
+          ])
+        )
+      }
+    });
+    
+    if (!result.success) {
+      logger.error('❌ JavaScript build failed!');
+      
+      // ✅ IMPROVED: Better error reporting
+      if (result.logs && result.logs.length > 0) {
+        logger.error('\n📋 Build errors:');
+        result.logs.forEach((log, i) => {
+          logger.error(`\n${i + 1}. ${log.message}`);
+          if (log.position) {
+            logger.error(`   File: ${log.position.file || 'unknown'}`);
+            logger.error(`   Line: ${log.position.line || 'unknown'}`);
+          }
+        });
+      }
+      
+      throw new Error('JavaScript bundling failed - check errors above');
     }
-  });
-  
-  if (!result.success) {
-    logger.error('JavaScript build failed!');
-    result.logs.forEach(log => logger.error(log.message));
-    process.exit(1);
+    
+    // ✅ IMPROVED: Log successful bundle info
+    logger.success('✅ JavaScript bundled successfully');
+    logger.info(`   Entry points: ${result.outputs.filter(o => o.kind === 'entry-point').length}`);
+    logger.info(`   Chunks: ${result.outputs.filter(o => o.kind === 'chunk').length}`);
+    
+    const totalSize = result.outputs.reduce((sum, o) => sum + (o.size || 0), 0);
+    logger.info(`   Total size: ${(totalSize / 1024).toFixed(2)} KB`);
+    
+    return result;
+    
+  } catch (error) {
+    logger.error('❌ Bundling error: ' + error.message);
+    if (error.stack) logger.error(error.stack);
+    throw error;
   }
-  
-  logger.success('JavaScript bundled (with node_modules)');
-  return result;
 }
 
 function showBuildSummary(routes, serverIslands, clientRoutes, duration) {
