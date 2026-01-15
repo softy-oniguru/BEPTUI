@@ -1,4 +1,4 @@
-// bertui/src/server/dev-server.js - FIXED: Bun Native HMR
+// bertui/src/server/dev-server.js - FIXED: CSS Module Loading
 import { join, extname, dirname } from 'path';
 import { existsSync, readdirSync } from 'fs';
 import logger from '../logger/logger.js';
@@ -15,7 +15,6 @@ export async function startDevServer(options = {}) {
   
   const config = await loadConfig(root);
   
-  // ✅ Track connected WebSocket clients
   const clients = new Set();
   
   let hasRouter = false;
@@ -25,30 +24,29 @@ export async function startDevServer(options = {}) {
     logger.info('File-based routing enabled');
   }
   
-  // ✅ Use Bun.serve() with WebSocket support
   const server = Bun.serve({
     port,
     
     async fetch(req, server) {
       const url = new URL(req.url);
       
-      // ✅ WebSocket upgrade for HMR
+      // WebSocket upgrade for HMR
       if (url.pathname === '/__hmr') {
         const success = server.upgrade(req);
         if (success) {
-          return undefined; // Don't return a Response
+          return undefined;
         }
         return new Response('WebSocket upgrade failed', { status: 500 });
       }
       
-      // ✅ Serve HTML
+      // Serve HTML
       if (url.pathname === '/' || (!url.pathname.includes('.') && !url.pathname.startsWith('/compiled'))) {
         return new Response(await serveHTML(root, hasRouter, config, port), {
           headers: { 'Content-Type': 'text/html' }
         });
       }
       
-      // ✅ Serve compiled JavaScript
+      // Serve compiled JavaScript
       if (url.pathname.startsWith('/compiled/')) {
         const filepath = join(compiledDir, url.pathname.replace('/compiled/', ''));
         const file = Bun.file(filepath);
@@ -66,7 +64,22 @@ export async function startDevServer(options = {}) {
         }
       }
       
-      // ✅ Serve CSS
+      // ✅ Serve bertui-animate CSS
+      if (url.pathname === '/bertui-animate.css') {
+        const bertuiAnimatePath = join(root, 'node_modules/bertui-animate/dist/bertui-animate.min.css');
+        const file = Bun.file(bertuiAnimatePath);
+        
+        if (await file.exists()) {
+          return new Response(file, {
+            headers: { 
+              'Content-Type': 'text/css',
+              'Cache-Control': 'no-store'
+            }
+          });
+        }
+      }
+      
+      // Serve CSS
       if (url.pathname.startsWith('/styles/')) {
         const filepath = join(stylesDir, url.pathname.replace('/styles/', ''));
         const file = Bun.file(filepath);
@@ -81,7 +94,7 @@ export async function startDevServer(options = {}) {
         }
       }
       
-      // ✅ Serve images from src/images/
+      // Serve images from src/images/
       if (url.pathname.startsWith('/images/')) {
         const filepath = join(srcDir, 'images', url.pathname.replace('/images/', ''));
         const file = Bun.file(filepath);
@@ -99,7 +112,7 @@ export async function startDevServer(options = {}) {
         }
       }
       
-      // ✅ Serve from public/
+      // Serve from public/
       if (url.pathname.startsWith('/public/')) {
         const filepath = join(publicDir, url.pathname.replace('/public/', ''));
         const file = Bun.file(filepath);
@@ -111,14 +124,23 @@ export async function startDevServer(options = {}) {
         }
       }
       
-      // ✅ Serve node_modules (for bertui-* packages)
+      // ✅ FIX: Serve node_modules with proper MIME types
       if (url.pathname.startsWith('/node_modules/')) {
         const filepath = join(root, 'node_modules', url.pathname.replace('/node_modules/', ''));
         const file = Bun.file(filepath);
         
         if (await file.exists()) {
           const ext = extname(filepath).toLowerCase();
-          const contentType = ext === '.js' ? 'application/javascript; charset=utf-8' : getContentType(ext);
+          
+          // ✅ Proper MIME type detection
+          let contentType;
+          if (ext === '.css') {
+            contentType = 'text/css';
+          } else if (ext === '.js' || ext === '.mjs') {
+            contentType = 'application/javascript; charset=utf-8';
+          } else {
+            contentType = getContentType(ext);
+          }
           
           return new Response(file, {
             headers: { 
@@ -132,7 +154,6 @@ export async function startDevServer(options = {}) {
       return new Response('Not found', { status: 404 });
     },
     
-    // ✅ WebSocket handler for HMR
     websocket: {
       open(ws) {
         clients.add(ws);
@@ -156,7 +177,6 @@ export async function startDevServer(options = {}) {
   logger.info(`📦 Public: /public/* → public/`);
   logger.info(`⚡ BertUI Packages: /node_modules/* → node_modules/`);
   
-  // ✅ Setup file watcher
   setupFileWatcher(root, compiledDir, clients, async () => {
     hasRouter = existsSync(join(compiledDir, 'router.js'));
   });
@@ -179,6 +199,14 @@ async function serveHTML(root, hasRouter, config, port) {
     }
   }
   
+  // ✅ FIX: Auto-detect bertui-animate CSS (bundled version)
+  let bertuiAnimateStylesheet = '';
+  const bertuiAnimatePath = join(root, 'node_modules/bertui-animate/dist/bertui-animate.min.css');
+  if (existsSync(bertuiAnimatePath)) {
+    bertuiAnimateStylesheet = '  <link rel="stylesheet" href="/bertui-animate.css">';
+    logger.info('✅ bertui-animate detected');
+  }
+  
   // Build import map
   const importMap = {
     "react": "https://esm.sh/react@18.2.0",
@@ -186,7 +214,7 @@ async function serveHTML(root, hasRouter, config, port) {
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
   };
   
-  // Auto-detect bertui-* packages
+  // Auto-detect bertui-* JavaScript packages
   const nodeModulesDir = join(root, 'node_modules');
   
   if (existsSync(nodeModulesDir)) {
@@ -255,6 +283,7 @@ async function serveHTML(root, hasRouter, config, port) {
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
   
 ${userStylesheets}
+${bertuiAnimateStylesheet}
   
   <script type="importmap">
   ${JSON.stringify({ imports: importMap }, null, 2)}
@@ -274,9 +303,7 @@ ${userStylesheets}
 <body>
   <div id="root"></div>
   
-  <!-- ✅ Bun Native HMR Script -->
   <script type="module">
-    // WebSocket-based HMR (no polling!)
     const ws = new WebSocket('ws://localhost:${port}/__hmr');
     
     ws.onopen = () => {
@@ -358,7 +385,6 @@ function getContentType(ext) {
   return types[ext] || 'text/plain';
 }
 
-// ✅ File watcher with proper debouncing
 function setupFileWatcher(root, compiledDir, clients, onRecompile) {
   const srcDir = join(root, 'src');
   const configPath = join(root, 'bertui.config.js');
@@ -374,7 +400,6 @@ function setupFileWatcher(root, compiledDir, clients, onRecompile) {
   let recompileTimeout = null;
   const watchedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif'];
   
-  // Notify all clients
   function notifyClients(message) {
     for (const client of clients) {
       try {
@@ -395,7 +420,6 @@ function setupFileWatcher(root, compiledDir, clients, onRecompile) {
     
     logger.info(`📝 File changed: ${filename}`);
     
-    // ✅ Clear previous timeout and debounce
     clearTimeout(recompileTimeout);
     
     recompileTimeout = setTimeout(async () => {
@@ -414,7 +438,6 @@ function setupFileWatcher(root, compiledDir, clients, onRecompile) {
         logger.success('✅ Recompiled successfully');
         notifyClients({ type: 'compiled' });
         
-        // ✅ Wait 100ms before triggering reload (let compilation finish)
         setTimeout(() => {
           notifyClients({ type: 'reload' });
         }, 100);
@@ -424,10 +447,9 @@ function setupFileWatcher(root, compiledDir, clients, onRecompile) {
       } finally {
         isRecompiling = false;
       }
-    }, 150); // ✅ Debounce: wait 150ms for multiple file changes
+    }, 150);
   });
   
-  // Watch config file
   if (existsSync(configPath)) {
     watch(configPath, async (eventType) => {
       if (eventType === 'change') {

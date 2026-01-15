@@ -1,4 +1,4 @@
-// bertui/src/build/generators/html-generator.js - FIXED JSX RUNTIME
+// bertui/src/build/generators/html-generator.js - FIXED CSS BUILD
 import { join, relative } from 'path';
 import { mkdirSync, existsSync, cpSync } from 'fs';
 import logger from '../../logger/logger.js';
@@ -17,53 +17,75 @@ export async function generateProductionHTML(root, outDir, buildResult, routes, 
   const bundlePath = relative(outDir, mainBundle.path).replace(/\\/g, '/');
   const defaultMeta = config.meta || {};
   
-  // ✅ FIX: Check if bertui-icons is installed and copy to dist/
-  const bertuiIconsInstalled = await copyBertuiIconsToProduction(root, outDir);
+  // ✅ Copy bertui-icons AND bertui-animate to dist/
+  const bertuiPackages = await copyBertuiPackagesToProduction(root, outDir);
   
   logger.info(`📄 Generating HTML for ${routes.length} routes...`);
   
-  // Process in batches to avoid Bun crashes
   const BATCH_SIZE = 5;
   
   for (let i = 0; i < routes.length; i += BATCH_SIZE) {
     const batch = routes.slice(i, i + BATCH_SIZE);
     logger.debug(`Processing batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(routes.length/BATCH_SIZE)}`);
     
-    // Process batch sequentially
     for (const route of batch) {
-      await processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir, bertuiIconsInstalled);
+      await processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir, bertuiPackages);
     }
   }
   
   logger.success(`✅ HTML generation complete for ${routes.length} routes`);
 }
 
-// ✅ NEW: Copy bertui-icons to dist/ for production
-async function copyBertuiIconsToProduction(root, outDir) {
+// ✅ UPDATED: Copy ALL bertui-* packages to dist/
+async function copyBertuiPackagesToProduction(root, outDir) {
   const nodeModulesDir = join(root, 'node_modules');
+  const packages = {
+    bertuiIcons: false,
+    bertuiAnimate: false
+  };
+  
+  if (!existsSync(nodeModulesDir)) {
+    logger.debug('node_modules not found, skipping package copy');
+    return packages;
+  }
+  
+  // Copy bertui-icons
   const bertuiIconsSource = join(nodeModulesDir, 'bertui-icons');
-  
-  if (!existsSync(bertuiIconsSource)) {
-    logger.debug('bertui-icons not installed, skipping...');
-    return false;
+  if (existsSync(bertuiIconsSource)) {
+    try {
+      const bertuiIconsDest = join(outDir, 'node_modules', 'bertui-icons');
+      mkdirSync(join(outDir, 'node_modules'), { recursive: true });
+      cpSync(bertuiIconsSource, bertuiIconsDest, { recursive: true });
+      logger.success('✅ Copied bertui-icons to dist/node_modules/');
+      packages.bertuiIcons = true;
+    } catch (error) {
+      logger.error(`Failed to copy bertui-icons: ${error.message}`);
+    }
   }
   
-  try {
-    const bertuiIconsDest = join(outDir, 'node_modules', 'bertui-icons');
-    mkdirSync(join(outDir, 'node_modules'), { recursive: true });
-    
-    // Copy the entire bertui-icons package
-    cpSync(bertuiIconsSource, bertuiIconsDest, { recursive: true });
-    
-    logger.success('✅ Copied bertui-icons to dist/node_modules/');
-    return true;
-  } catch (error) {
-    logger.error(`Failed to copy bertui-icons: ${error.message}`);
-    return false;
+  // ✅ NEW: Copy ONLY bertui-animate CSS files (not the whole package)
+  const bertuiAnimateSource = join(nodeModulesDir, 'bertui-animate', 'dist');
+  if (existsSync(bertuiAnimateSource)) {
+    try {
+      const bertuiAnimateDest = join(outDir, 'css');
+      mkdirSync(bertuiAnimateDest, { recursive: true });
+      
+      // Copy minified CSS
+      const minCSSPath = join(bertuiAnimateSource, 'bertui-animate.min.css');
+      if (existsSync(minCSSPath)) {
+        cpSync(minCSSPath, join(bertuiAnimateDest, 'bertui-animate.min.css'));
+        logger.success('✅ Copied bertui-animate.min.css to dist/css/');
+        packages.bertuiAnimate = true;
+      }
+    } catch (error) {
+      logger.error(`Failed to copy bertui-animate: ${error.message}`);
+    }
   }
+  
+  return packages;
 }
 
-async function processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir, bertuiIconsInstalled) {
+async function processSingleRoute(route, serverIslands, config, defaultMeta, bundlePath, outDir, bertuiPackages) {
   try {
     const sourceCode = await Bun.file(route.path).text();
     const pageMeta = extractMetaFromSource(sourceCode);
@@ -84,7 +106,7 @@ async function processSingleRoute(route, serverIslands, config, defaultMeta, bun
       }
     }
     
-    const html = generateHTML(meta, route, bundlePath, staticHTML, isServerIsland, bertuiIconsInstalled);
+    const html = generateHTML(meta, route, bundlePath, staticHTML, isServerIsland, bertuiPackages);
     
     let htmlPath;
     if (route.route === '/') {
@@ -239,8 +261,8 @@ async function extractStaticHTMLFromComponent(sourceCode, filePath) {
   }
 }
 
-// ✅ FIXED: Add jsx-runtime to import map
-function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland = false, bertuiIconsInstalled = false) {
+// ✅ UPDATED: Add bertui-animate CSS to production HTML
+function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland = false, bertuiPackages = {}) {
   const rootContent = staticHTML 
     ? `<div id="root">${staticHTML}</div>` 
     : '<div id="root"></div>';
@@ -249,9 +271,14 @@ function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland =
     ? '<!-- 🏝️ Server Island: Static content rendered at build time -->'
     : '<!-- ⚡ Client-only: Content rendered by JavaScript -->';
   
-  // ✅ FIX: Add jsx-runtime to import map for production
-  const bertuiIconsImport = bertuiIconsInstalled 
+  // ✅ Add bertui-icons to import map
+  const bertuiIconsImport = bertuiPackages.bertuiIcons 
     ? ',\n      "bertui-icons": "/node_modules/bertui-icons/generated/index.js"'
+    : '';
+  
+  // ✅ Add bertui-animate CSS link
+  const bertuiAnimateCSS = bertuiPackages.bertuiAnimate
+    ? '  <link rel="stylesheet" href="/css/bertui-animate.min.css">'
     : '';
   
   return `<!DOCTYPE html>
@@ -271,6 +298,7 @@ function generateHTML(meta, route, bundlePath, staticHTML = '', isServerIsland =
   ${meta.ogImage ? `<meta property="og:image" content="${meta.ogImage}">` : ''}
   
   <link rel="stylesheet" href="/styles/bertui.min.css">
+${bertuiAnimateCSS}
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   
   <script type="importmap">
