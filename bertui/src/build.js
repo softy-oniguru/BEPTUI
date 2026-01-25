@@ -1,9 +1,15 @@
-// bertui/src/build.js - FORCE PRODUCTION MODE
+// ============================================
+// PART 1: BERTUI PACKAGE MODIFICATIONS
+// ============================================
+
+// ============================================
+// FILE: bertui/src/build.js (COMPLETE UPDATED VERSION)
+// ============================================
+
 import { join } from 'path';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import logger from './logger/logger.js';
 import { loadEnvVariables } from './utils/env.js';
-import { runPageBuilder } from './pagebuilder/core.js';
 
 import { compileForBuild } from './build/compiler/index.js';
 import { buildAllCSS } from './build/processors/css-builder.js';
@@ -37,9 +43,33 @@ export async function buildProduction(options = {}) {
     const { loadConfig } = await import('./config/loadConfig.js');
     const config = await loadConfig(root);
     
-    if (config.pageBuilder) {
-      logger.info('Step 0.5: Running Page Builder...');
-      await runPageBuilder(root, config);
+    // ✅ NEW: Step 0.5 - Run PageBuilder (if enabled and installed)
+    if (config.pageBuilder?.enabled) {
+      logger.info('Step 0.5: Checking for PageBuilder plugin...');
+      
+      try {
+        // Dynamic import - only loads if package exists
+        const { runPageBuilder } = await import('bertui-pagebuilder');
+        
+        logger.success('✅ bertui-pagebuilder detected');
+        logger.info('🔧 Running PageBuilder...');
+        
+        await runPageBuilder(root, config);
+        
+        logger.success('✅ PageBuilder completed successfully');
+        
+      } catch (error) {
+        if (error.code === 'MODULE_NOT_FOUND' || error.code === 'ERR_MODULE_NOT_FOUND') {
+          logger.warn('⚠️  PageBuilder enabled in config but package not installed!');
+          logger.info('   Install with: bun add bertui-pagebuilder');
+          logger.info('   Skipping PageBuilder step...');
+        } else {
+          logger.error(`❌ PageBuilder failed: ${error.message}`);
+          throw error;
+        }
+      }
+    } else {
+      logger.debug('PageBuilder not enabled in config');
     }
     
     logger.info('Step 1: Compiling and detecting Server Islands...');
@@ -94,7 +124,6 @@ export async function buildProduction(options = {}) {
 
 async function bundleJavaScript(buildEntry, outDir, envVars, buildDir) {
   try {
-    // Change to build directory where bunfig.toml is
     const originalCwd = process.cwd();
     process.chdir(buildDir);
     
@@ -173,3 +202,8 @@ function showBuildSummary(routes, serverIslands, clientRoutes, duration) {
   
   logger.bigLog('READY TO DEPLOY 🚀', { color: 'green' });
 }
+
+
+
+
+

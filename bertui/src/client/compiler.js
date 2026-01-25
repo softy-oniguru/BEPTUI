@@ -1,4 +1,7 @@
-// bertui/src/client/compiler.js - FIXED: jsxDEV error
+// ============================================
+// FILE: bertui/src/client/compiler.js (UPDATED - Skip templates/)
+// ============================================
+
 import { existsSync, mkdirSync, readdirSync, statSync } from 'fs';
 import { join, extname, relative, dirname } from 'path';
 import logger from '../logger/logger.js';
@@ -127,9 +130,7 @@ const RouterContext = createContext(null);
 
 export function useRouter() {
   const context = useContext(RouterContext);
-  if (!context) {
-    throw new Error('useRouter must be used within a Router component');
-  }
+  if (!context) throw new Error('useRouter must be used within a Router');
   return context;
 }
 
@@ -194,24 +195,13 @@ export function Link({ to, children, ...props }) {
 }
 
 function NotFound() {
-  return React.createElement(
-    'div',
-    {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        fontFamily: 'system-ui'
-      }
-    },
+  return React.createElement('div', {
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', 
+             justifyContent: 'center', minHeight: '100vh', fontFamily: 'system-ui' }
+  },
     React.createElement('h1', { style: { fontSize: '6rem', margin: 0 } }, '404'),
     React.createElement('p', { style: { fontSize: '1.5rem', color: '#666' } }, 'Page not found'),
-    React.createElement('a', { 
-      href: '/', 
-      style: { color: '#10b981', textDecoration: 'none', fontSize: '1.2rem' } 
-    }, 'Go home')
+    React.createElement('a', { href: '/', style: { color: '#10b981', textDecoration: 'none' } }, 'Go home')
   );
 }
 
@@ -219,11 +209,9 @@ ${imports}
 
 export const routes = [
 ${routeConfigs}
-];
-`;
+];`;
   
-  const routerPath = join(outDir, 'router.js');
-  await Bun.write(routerPath, routerComponentCode);
+  await Bun.write(join(outDir, 'router.js'), routerComponentCode);
 }
 
 async function compileDirectory(srcDir, outDir, root, envVars) {
@@ -235,6 +223,12 @@ async function compileDirectory(srcDir, outDir, root, envVars) {
     const stat = statSync(srcPath);
     
     if (stat.isDirectory()) {
+      // ✅ NEW: Skip templates directory
+      if (file === 'templates') {
+        logger.debug('⏭️  Skipping src/templates/ (PageBuilder templates only)');
+        continue;
+      }
+      
       const subOutDir = join(outDir, file);
       mkdirSync(subOutDir, { recursive: true });
       const subStats = await compileDirectory(srcPath, subOutDir, root, envVars);
@@ -295,12 +289,11 @@ async function compileFile(srcPath, outDir, filename, relativePath, root, envVar
     const outPath = join(outDir, filename.replace(/\.(jsx|tsx|ts)$/, '.js'));
     code = fixRouterImports(code, outPath, root);
     
-    // ✅ CRITICAL FIX: Force React.createElement instead of jsxDEV
     const transpiler = new Bun.Transpiler({ 
       loader,
       tsconfig: {
         compilerOptions: {
-          jsx: 'react', // ✅ Use 'react' instead of 'react-jsx'
+          jsx: 'react',
           jsxFactory: 'React.createElement',
           jsxFragmentFactory: 'React.Fragment'
         }
