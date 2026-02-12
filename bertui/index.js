@@ -1,44 +1,61 @@
-// bertui/src/index.js - ONE EXPORT FILE TO RULE THEM ALL
+// ============================================
+// FILE: bertui/index.js (Located in root)
+// ============================================
 
 // Compiler
-export { compileProject } from './client/compiler.js';
-export { compileForBuild } from './build/compiler/index.js';
-export { discoverRoutes } from './build/compiler/route-discoverer.js';
+export { compileProject, compileFile } from './src/client/compiler.js';
+export { compileForBuild } from './src/build/compiler/index.js';
+export { discoverRoutes } from './src/build/compiler/route-discoverer.js';
 
 // HMR
-export { hmr } from './client/hmr-runtime.js';
+export { hmr } from './src/client/hmr-runtime.js';
 
-// Image Optimizer - RUST WASM (no Rust for users)
+// Image Optimizer
 export { 
   optimizeImage, 
   optimizeImagesBatch, 
   hasWasm, 
   version as optimizerVersion 
-} from './image-optimizer/index.js';
+} from './src/image-optimizer/index.js';
 
 // Build
-export { buildProduction } from './build.js';
-export { optimizeImages } from './build/image-optimizer.js';
+export { buildProduction } from './src/build.js';
+export { optimizeImages } from './src/build/image-optimizer.js';
 
 // Router
-export { Router, Link, useRouter } from './router/index.js';
-export { SSRRouter } from './router/SSRRouter.jsx';
+export { Router, Link, useRouter } from './src/router/index.js';
+export { SSRRouter } from './src/router/SSRRouter.js';
 
 // Config
-export { loadConfig, defaultConfig } from './config/index.js';
+export { loadConfig, defaultConfig } from './src/config/index.js';
 
 // Logger
-export { default as logger } from './logger/logger.js';
+export { default as logger } from './src/logger/logger.js';
 
-// CLI (backward compatibility)
-export { program } from './cli.js';
+// CLI
+export { program } from './src/cli.js';
 
 // Version
 export const version = '1.2.0';
 
+// Import for default export
+import { compileProject, compileFile } from './src/client/compiler.js';
+import { compileForBuild } from './src/build/compiler/index.js';
+import { discoverRoutes } from './src/build/compiler/route-discoverer.js';
+import { hmr } from './src/client/hmr-runtime.js';
+import { optimizeImage, optimizeImagesBatch } from './src/image-optimizer/index.js';
+import { optimizeImages } from './src/build/image-optimizer.js';
+import { buildProduction } from './src/build.js';
+import { Router, Link, useRouter } from './src/router/index.js';
+import { SSRRouter } from './src/router/SSRRouter.js';
+import { loadConfig, defaultConfig } from './src/config/index.js';
+import logger from './src/logger/logger.js';
+import { program } from './src/cli.js';
+
 // Default export
 export default {
   compileProject,
+  compileFile,
   compileForBuild,
   discoverRoutes,
   hmr,

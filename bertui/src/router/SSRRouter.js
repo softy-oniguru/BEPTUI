@@ -22,7 +22,7 @@ export function useRouter() {
 }
 
 // ✅ SSR-safe Router component
-export function Router({ routes, initialPath = '/' }) {
+export function SSRRouter({ routes, initialPath = '/' }) {
   const [currentRoute, setCurrentRoute] = useState(null);
   const [params, setParams] = useState({});
   const [isClient, setIsClient] = useState(false);

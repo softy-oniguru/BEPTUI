@@ -72,5 +72,32 @@ function detectFormat(buffer) {
   return 'unknown';
 }
 
+// Batch optimization function
+export async function optimizeImagesBatch(images, format = 'auto', options = {}) {
+  const results = [];
+  
+  for (const image of images) {
+    try {
+      const result = await optimizeImage(image.buffer || image, {
+        format,
+        ...options
+      });
+      
+      results.push({
+        ...result,
+        filename: image.filename || image.name || 'unknown'
+      });
+    } catch (error) {
+      results.push({
+        filename: image.filename || image.name || 'unknown',
+        error: error.message,
+        success: false
+      });
+    }
+  }
+  
+  return results;
+}
+
 export const hasWasm = () => false;
 export const version = '1.1.7';

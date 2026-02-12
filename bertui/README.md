@@ -13,7 +13,7 @@ Zero configuration. 494ms dev server. 265ms builds. Perfect SEO with Server Isla
 [![Rust](https://img.shields.io/badge/optimizer-Rust-WASM-orange)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-```bash
+
 # One command. Zero config. Instant speed. 78% smaller images.
 bunx create-bertui my-app && cd my-app && bun run dev
 
@@ -106,13 +106,13 @@ export default function About() {
 
 At build time:
 
-    ✅ Generates static HTML for instant loading
+  ✅ Generates static HTML for instant loading
 
-    ✅ Auto-adds to sitemap.xml
+  ✅ Auto-adds to sitemap.xml
 
-    ✅ Perfect SEO without SSR complexity
+  ✅ Perfect SEO without SSR complexity
 
-    ✅ Still builds in 265ms
+  ✅ Still builds in 265ms
 
 🦀 Image Optimization (Just Works)
 
@@ -241,17 +241,17 @@ Rust Required ❌ NO  N/A N/A N/A
 
 Future packages (in development):
 
-    🔄 bertui-elysia - Full-stack addon (API routes, auth, database)
+  🔄 bertui-elysia - Full-stack addon (API routes, auth, database)
 
-    🎨 bertui-animation - GPU-accelerated animations (Zig)
+  🎨 bertui-animation - GPU-accelerated animations (Zig)
 
-    📊 bertui-charts - High-performance charts (Rust)
+  📊 bertui-charts - High-performance charts (Rust)
 
 🙏 Credits
 
-    Runtime: Bun - The fastest JavaScript runtime
+  Runtime: Bun - The fastest JavaScript runtime
 
-    Server: Elysia - Fast and elegant web framework
+  Server: Elysia - Fast and elegant web framework
 
     CSS: LightningCSS - Lightning-fast CSS processing
 

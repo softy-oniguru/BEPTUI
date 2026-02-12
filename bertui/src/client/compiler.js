@@ -63,6 +63,49 @@ export async function compileProject(root) {
   return { outDir, stats, routes };
 }
 
+// NEW EXPORT - Single file compilation for HMR
+export async function compileFile(srcPath, root) {
+  const srcDir = join(root, 'src');
+  const outDir = join(root, '.bertui', 'compiled');
+  const envVars = loadEnvVariables(root);
+  
+  const relativePath = relative(srcDir, srcPath);
+  const ext = extname(srcPath);
+  
+  if (!existsSync(outDir)) {
+    mkdirSync(outDir, { recursive: true });
+  }
+  
+  if (['.jsx', '.tsx', '.ts'].includes(ext)) {
+    const fileName = srcPath.split('/').pop();
+    await compileFileInternal(srcPath, outDir, fileName, relativePath, root, envVars);
+    return {
+      outputPath: relativePath.replace(/\.(jsx|tsx|ts)$/, '.js'),
+      success: true
+    };
+  } else if (ext === '.js') {
+    const fileName = srcPath.split('/').pop();
+    const outPath = join(outDir, fileName);
+    let code = await Bun.file(srcPath).text();
+    
+    code = removeCSSImports(code);
+    code = replaceEnvInCode(code, envVars);
+    code = fixRouterImports(code, outPath, root);
+    
+    if (usesJSX(code) && !code.includes('import React')) {
+      code = `import React from 'react';\n${code}`;
+    }
+    
+    await Bun.write(outPath, code);
+    return {
+      outputPath: relativePath,
+      success: true
+    };
+  }
+  
+  return { success: false };
+}
+
 async function discoverRoutes(pagesDir) {
   const routes = [];
   
@@ -248,7 +291,7 @@ async function compileDirectory(srcDir, outDir, root, envVars) {
         logger.debug(`Copied CSS: ${relativePath}`);
         stats.files++;
       } else if (['.jsx', '.tsx', '.ts'].includes(ext)) {
-        await compileFile(srcPath, outDir, file, relativePath, root, envVars);
+        await compileFileInternal(srcPath, outDir, file, relativePath, root, envVars);
         stats.files++;
       } else if (ext === '.js') {
         const outPath = join(outDir, file);
@@ -275,7 +318,7 @@ async function compileDirectory(srcDir, outDir, root, envVars) {
   return stats;
 }
 
-async function compileFile(srcPath, outDir, filename, relativePath, root, envVars) {
+async function compileFileInternal(srcPath, outDir, filename, relativePath, root, envVars) {
   const ext = extname(filename);
   const loader = ext === '.tsx' ? 'tsx' : ext === '.ts' ? 'ts' : 'jsx';
   
