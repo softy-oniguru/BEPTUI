@@ -1,16 +1,16 @@
 {
   "name": "beptui",
   "version": "1.1.8",
-  "description": "Lightning-fast React dev server powered by Bun - Now with Rust image optimization (WASM, no Rust required for users)",
+  "description": "Lightning-fast Preact dev server powered by Bun - Now with Rust image optimization (WASM, no Rust required for users)",
   "type": "module",
-  "main": "./index.js",
-  "types": "./types/index.d.ts",
+  "main": "./index.ts",
+  //"types": "./types/index.d.ts",
   "bin": {
-    "bertui": "./bin/bertui.js"
+    "beptui": "./bin/beptui.ts"
   },
   "exports": {
     ".": {
-      "types": "./types/index.d.ts",
+      //"types": "./types/index.d.ts",
       "import": "./index.js",
       "default": "./index.js"
     },
@@ -21,11 +21,11 @@
       "import": "./src/image-optimizer/index.js"
     },
     "./router": {
-      "types": "./types/router.d.ts",
+      //"types": "./types/router.d.ts",
       "import": "./src/router/index.js"
     },
     "./config": {
-      "types": "./types/config.d.ts",
+      //"types": "./types/config.d.ts",
       "import": "./src/config/index.js"
     },
     "./logger": {

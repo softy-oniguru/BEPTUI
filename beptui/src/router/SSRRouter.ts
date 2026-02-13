@@ -1,5 +1,4 @@
-// src/router/SSRRouter.jsx
-// SSR-Compatible Router for BertUI - Works during build AND runtime
+// src/router/SSRRouter.tsx
 import React, { useState, useEffect, createContext, useContext } from 'react';
 
 const RouterContext = createContext(null);

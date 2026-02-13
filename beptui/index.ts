@@ -1,6 +1,6 @@
-// ============================================
-// FILE: bertui/index.js (Located in root)
-// ============================================
+/*/
+ * beptui/index.ts
+/*/
 
 // Compiler
 export { compileProject, compileFile } from './src/client/compiler.js';
