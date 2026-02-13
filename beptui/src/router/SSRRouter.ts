@@ -1,155 +1,291 @@
-// src/router/SSRRouter.tsx
-import React, { useState, useEffect, createContext, useContext } from 'react';
+/**
+ * @file src/router/SSRRouter.tsx
+ */
 
-const RouterContext = createContext(null);
+import { h, createContext, FunctionalComponent } from "preact"
+import { useContext, useEffect, useRef, useState } from "preact/hooks"
+import type { ComponentChildren } from "preact"
 
-// ✅ SSR-safe useRouter hook
-export function useRouter() {
-  const context = useContext(RouterContext);
-  
-  // During SSR, provide a mock router
-  if (!context) {
+/*───────────────────────────────────────────────────────────────────────────*\
+  Types
+\*───────────────────────────────────────────────────────────────────────────*/
+
+type Route =
+  {
+    type      : "static"
+    path      : string
+    component : FunctionalComponent<any>
+  }
+| {
+    type       : "dynamic"
+    path       : string
+    regex?     : RegExp
+    paramNames?: string[]
+    component  : FunctionalComponent<any>
+  }
+
+type Match =
+  {
+    route  : Route
+    params : Record<string, string>
+  }
+
+type RouterValue =
+  {
+    pathname : string
+    params   : Record<string, string>
+    navigate : (path : string) => void
+    isSSR    : boolean
+  }
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  Context
+\*───────────────────────────────────────────────────────────────────────────*/
+
+const RouterContext = createContext<RouterValue | null>(null)
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  Constants
+\*───────────────────────────────────────────────────────────────────────────*/
+
+const EMPTY_PARAMS : Record<string, string> = Object.freeze({})
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  Compile routes once
+\*───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * Precompile dynamic routes → no regex allocation during render
+ */
+function compile(routes : Route[]) : Route[] {
+  const out : Route[] = []
+
+  for (const r of routes) {
+    if (r.type === "static") {
+      out.push(r)
+      continue
+    }
+
+    const paramNames =
+      [...r.path.matchAll(/\[([^\]]+)\]/g)].map(m => m[1])
+
+    const pattern =
+      r.path.replace(/\[([^\]]+)\]/g, "([^/]+)")
+
+    out.push({
+      ...r,
+      regex      : new RegExp("^" + pattern + "$"),
+      paramNames
+    })
+  }
+
+  return out
+}
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  Match helper
+\*───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * Match path against compiled routes
+ */
+function match(path : string, routes : Route[]) : Match | null {
+
+  for (const r of routes) {
+    if (r.type === "static") {
+      if (r.path === path) {
+        return { route : r, params : EMPTY_PARAMS }
+      }
+      continue
+    }
+
+    const m = path.match(r.regex!)
+    if (!m) continue
+
+    const params : Record<string, string> = {}
+
+    for (let i = 0; i < r.paramNames!.length; i++) {
+      params[r.paramNames![i]] = m[i + 1]
+    }
+
+    return { route : r, params }
+  }
+
+  return null
+}
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  Hook
+\*───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * SSR-safe router accessor
+ */
+export function useRouter() : RouterValue {
+  const ctx = useContext(RouterContext)
+
+  if (!ctx) {
     return {
-      pathname: '/',
-      params: {},
-      navigate: () => {},
-      isSSR: true
-    };
+      pathname : "/",
+      params   : EMPTY_PARAMS,
+      navigate : () => {},
+      isSSR    : true
+    }
   }
-  
-  return context;
+
+  return ctx
 }
 
-// ✅ SSR-safe Router component
-export function SSRRouter({ routes, initialPath = '/' }) {
-  const [currentRoute, setCurrentRoute] = useState(null);
-  const [params, setParams] = useState({});
-  const [isClient, setIsClient] = useState(false);
+/*───────────────────────────────────────────────────────────────────────────*\
+  Router
+\*───────────────────────────────────────────────────────────────────────────*/
 
-  // Detect if we're in the browser
-  useEffect(() => {
-    setIsClient(true);
-    matchAndSetRoute(window.location.pathname);
-
-    const handlePopState = () => {
-      matchAndSetRoute(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [routes]);
-
-  // Match route on server-side (SSR)
-  if (!isClient && !currentRoute) {
-    const matched = matchRoute(initialPath, routes);
-    if (matched) {
-      return React.createElement(
-        RouterContext.Provider,
-        { value: { pathname: initialPath, params: matched.params, navigate: () => {}, isSSR: true } },
-        React.createElement(matched.route.component, { params: matched.params })
-      );
-    }
+type Props =
+  {
+    routes      : Route[]
+    initialPath : string
   }
 
-  function matchRoute(pathname, routesList) {
-    // Try static routes first
-    for (const route of routesList) {
-      if (route.type === 'static' && route.path === pathname) {
-        return { route, params: {} };
-      }
-    }
+/**
+ * SSR + CSR router
+ * Single match on server
+ * Zero regex allocation on client
+ */
+export const SSRRouter : FunctionalComponent<Props> = ({
+  routes,
+  initialPath
+}) => {
 
-    // Try dynamic routes
-    for (const route of routesList) {
-      if (route.type === 'dynamic') {
-        const pattern = route.path.replace(/\[([^\]]+)\]/g, '([^/]+)');
-        const regex = new RegExp('^' + pattern + '$');
-        const match = pathname.match(regex);
+  const isSSR = typeof window === "undefined"
 
-        if (match) {
-          const paramNames = [...route.path.matchAll(/\[([^\]]+)\]/g)].map(m => m[1]);
-          const extractedParams = {};
-          paramNames.forEach((name, i) => {
-            extractedParams[name] = match[i + 1];
-          });
+  /* compile once */
+  const compiled = useRef<Route[]>(compile(routes))
 
-          return { route, params: extractedParams };
-        }
-      }
-    }
+  /* initial match (SSR or first client render) */
+  const initialMatch =
+    match(isSSR ? initialPath : window.location.pathname, compiled.current)
 
-    return null;
-  }
+  const [current, setCurrent] =
+    useState<Route | null>(initialMatch?.route ?? null)
 
-  function matchAndSetRoute(pathname) {
-    const matched = matchRoute(pathname, routes);
-    
-    if (matched) {
-      setCurrentRoute(matched.route);
-      setParams(matched.params);
+  const [params, setParams] =
+    useState<Record<string, string>>(initialMatch?.params ?? EMPTY_PARAMS)
+
+  const [pathname, setPathname] =
+    useState(isSSR ? initialPath : window.location.pathname)
+
+  /**
+   * Apply route (client only)
+   */
+  function apply(path : string) {
+    const m = match(path, compiled.current)
+
+    if (m) {
+      setCurrent(m.route)
+      setParams(m.params)
     } else {
-      setCurrentRoute(null);
-      setParams({});
+      setCurrent(null)
+      setParams(EMPTY_PARAMS)
     }
+
+    setPathname(path)
   }
 
-  function navigate(path) {
-    if (typeof window !== 'undefined') {
-      window.history.pushState({}, '', path);
-      matchAndSetRoute(path);
-    }
+  /**
+   * Client navigation
+   */
+  function navigate(path : string) {
+    if (isSSR) return
+    window.history.pushState(null, "", path)
+    apply(path)
   }
 
-  const routerValue = {
-    currentRoute,
-    params,
-    navigate,
-    pathname: typeof window !== 'undefined' ? window.location.pathname : initialPath,
-    isSSR: !isClient
-  };
+  /* client lifecycle */
+  useEffect(() => {
+    if (isSSR) return
 
-  const Component = currentRoute?.component;
+    const onPop = () => apply(window.location.pathname)
 
-  return React.createElement(
-    RouterContext.Provider,
-    { value: routerValue },
-    Component ? React.createElement(Component, { params }) : React.createElement(NotFound, null)
-  );
-}
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [])
 
-// ✅ SSR-safe Link component
-export function Link({ to, children, ...props }) {
-  const { navigate, isSSR } = useRouter();
-
-  function handleClick(e) {
-    // Don't prevent default during SSR
-    if (isSSR) return;
-    
-    e.preventDefault();
-    navigate(to);
-  }
-
-  return React.createElement('a', { href: to, onClick: handleClick, ...props }, children);
-}
-
-function NotFound() {
-  return React.createElement(
-    'div',
+  const value : RouterValue =
     {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        fontFamily: 'system-ui'
+      pathname,
+      params,
+      navigate,
+      isSSR
+    }
+
+  const Cmp = current?.component ?? NotFound
+
+  return h(
+    RouterContext.Provider,
+    { value },
+    h(Cmp, { params })
+  )
+}
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  Link
+\*───────────────────────────────────────────────────────────────────────────*/
+
+type LinkProps =
+  {
+    to       : string
+    children : ComponentChildren
+  } & JSX.HTMLAttributes<HTMLAnchorElement>
+
+/**
+ * SSR-safe link (native on server)
+ */
+export const Link : FunctionalComponent<LinkProps> = ({
+  to,
+  children,
+  ...rest
+}) => {
+
+  const { navigate, isSSR } = useRouter()
+
+  function onClick(e : MouseEvent) {
+    if (isSSR) return
+    e.preventDefault()
+    navigate(to)
+  }
+
+  return h("a", { href : to, onClick, ...rest }, children)
+}
+
+/*───────────────────────────────────────────────────────────────────────────*\
+  NotFound
+\*───────────────────────────────────────────────────────────────────────────*/
+
+const NotFound : FunctionalComponent = () =>
+  h("div",
+    {
+      style : {
+        display        : "flex",
+        flexDirection  : "column",
+        alignItems     : "center",
+        justifyContent : "center",
+        minHeight      : "100vh",
+        fontFamily     : "system-ui"
       }
     },
-    React.createElement('h1', { style: { fontSize: '6rem', margin: 0 } }, '404'),
-    React.createElement('p', { style: { fontSize: '1.5rem', color: '#666' } }, 'Page not found'),
-    React.createElement('a', { 
-      href: '/', 
-      style: { color: '#10b981', textDecoration: 'none', fontSize: '1.2rem' } 
-    }, 'Go home')
-  );
-}
+    [
+      h("h1", { style : { fontSize : "6rem", margin : 0 } }, "404"),
+      h("p",  { style : { fontSize : "1.5rem", color : "#666" } }, "Page not found"),
+      h("a",
+        {
+          href  : "/",
+          style : {
+            color           : "#10b981",
+            textDecoration  : "none",
+            fontSize        : "1.2rem"
+          }
+        },
+        "Go home"
+      )
+    ]
+  )
