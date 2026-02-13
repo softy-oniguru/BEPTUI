@@ -1,5 +1,5 @@
 {
-  "name": "bertui",
+  "name": "beptui",
   "version": "1.1.8",
   "description": "Lightning-fast React dev server powered by Bun - Now with Rust image optimization (WASM, no Rust required for users)",
   "type": "module",
